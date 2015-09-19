@@ -33,8 +33,6 @@ block content
         #fountainTextG_9.fountainTextG .
         #fountainTextG_10.fountainTextG .
 
-
-
 block headerStyles
   link(rel="stylesheet", href="/css/dragula.min.css")
   link(rel="stylesheet", href="/css/jquery.fancybox.css")
@@ -45,224 +43,64 @@ block headerScripts
 
 block footerScripts
   script(src='/socket.io/socket.io.js')
+
   script.
+
     $(function(){
-      var allElements = $(".hand,#deck,#discard").toArray(),
-          dragulaElements = [];
-      
-      var dragndrop = dragula(allElements);
-      
+
       var IO = {
+
         init: function(){
           IO.socket = io.connect();
           IO.bindEvents();
         },
 
         bindEvents: function(){
-          IO.socket.on('connected', IO.onConnected);
-          IO.socket.on('playerJoined', IO.playerJoined);
-          IO.socket.on('validate', IO.validate);
-          IO.socket.on('showCard', IO.showCard);
-          IO.socket.on('handSetUp', IO.handSetUp);
+          IO.socket.on('connected', IO.connected);
           IO.socket.on('goToLobby', IO.kickout);
-          IO.socket.on('cardDiscarded', App.waiting);
-          IO.socket.on('contractDecided', IO.contractDecided);
-          IO.socket.on('warning', IO.error);
-          IO.socket.on('left', IO.left);
-          IO.socket.on('renderContract', IO.renderContract);
-          IO.socket.on('allUsersReady', IO.allUsersReady);
-          IO.socket.on('undoMove', IO.undoMove);
-          IO.socket.on('valid', IO.valid);
-          IO.socket.on('setPlayer', IO.setPlayer);
-          IO.socket.on('changeTurn', IO.changeTurn);
         },
-
-        changeTurn: function(data){
-          App.ready();
-          $("#deck").empty();
-          $("#deck").append("<div class='card'></div>");
-          $(".dealer").removeClass("active");
-          $(".dealer","#player-"+data.dealer).addClass("active");
-        },
-      
-        setPlayer: function(data){
-          var players = data.players;
-              
-          for(var player in players){
-            console.log(player);
-          }
-
-        },
-
-        contractDecided: function(){
-          App.waiting();
-          IO.socket.emit("letRoomKnow");
-        },
-
-        undoMove: function(data){
-          App.validMove = false;
-        },
-        
-        valid: function(data){
-          App.validMove = true;
-        },
-
-        startGame: function(data){
-          $(".overlay").hide();
-          IO.socket.emit("startGame");
-        },
-        
-        renderContract: function(){
-          $.get("/contracts", function(data){
-            $.fancybox(data,{
-              closeBtn: false,
-              modal: true
-            });
-          }, "html");
-
-        },
-
-        left: function(data){
-          var player = $("#player-"+data.player);
-          $(player).remove();
-          console.log("Player left");
-        },
-
-        discarded: function(data){
-          $("#discardPile").prepend(data.card);
-        },
-
-        kickout: function(){
-          window.location.href = "/lobby";
-        },
-        
-        handSetUp: function(data){
-          var cardHtml = "";
-          console.log(data);
-          $(".hand","#me").html("");
-
-          data.hand.forEach(function(element,index){
-            var currentCardIndex = index + 1;
-            var rank = element.split("_")[1];
-            cardHtml = "<span class='card "+element+"' data-card='"+element+"'><p>"+rank+"</p></span>";
-            $(".hand","#player-1").append(cardHtml);
-            
-          });
-        
-          App.currentPlayer = data.id;
-
-          if(data.players){
-            IO.setPlayer(data);
-          }
-        },
-
-        onConnected: function(gameInfo){
-          App.joinRoom();
-        },
-
-        error: function(data){
-          console.log(data.message);
-          if(data.stopDragging){
-            App.stopDragging();
-          }
-        },
-
-        joinError: function(data){
-         
-        },
-
-        playerJoined: function(data){
-
-          var playerHtml
-              , playerSelector
-              , table = $("#table");
-
-          for(var i = 2; i <= data.playerToSet; i++){
-            console.log(data.playerToSet);
-            playerSelector = "player-" + data.playerToSet;
-            jQueryPlayer  = $("#"+ playerSelector, "#table");
-            if(!jQueryPlayer.length){
-              playerHtml = "<div id='"+playerSelector+"' class='clearfix'>";
-              playerHtml += "<div class='dealer'></div>";
-              playerHtml += "<div class='hand' id='player-"+i+"-hand' data-decktype='playerhand'>";
-              for(var u = 0; u < 7; u++){
-                playerHtml += "<span class='card'><p></p></span>";
-              }
-              playerHtml += "</div>";
-              playerHtml += "</div>";
-            }
-
-            table.append(playerHtml);
-          }
-
-        },
-
-        showCard: function(data){
-          var newCard = data.newCard;
-          console.log(newCard);
-          var text = newCard.split("_")[1];
-          $(App.referencedElement).addClass(newCard);
-          $(App.referencedElement).attr("data-card", newCard);
-          $(App.referencedElement).append("<p>"+text+"</p>");
-          App.referencedElement = null;
-        },
-
-        validate: function(data){
-          if(!data.isValidated){
-            IO.socket.emit("changeTurn", {room: App.gameId, playerId: App.currentPlayer});
-          }else{
-            IO.socket.emit("winner");
-          }
-        }
+  
+        kickout: kickout,
+        connected: connected
 
       };
 
       var App = {
         
-        gameId: "",
-        mySocketId: '',
-        myRole: '',
-        currentPlayer: "",
-        fromHand: "",
-        pulledFrom: "",
-        referencedElement: "",
+        //elements of the game
+        draggableElements: [".hand", "#deck", "#discard"],
+        currentDeckObject: $("#deck"),
+        myHand: $("#me"),
+        roomID: $("#room").data("room"),
+        loading: $("#await"),
+        overlay: $("#overlay"),
+        fromHand: '',
+        referencedElement: '',
 
-        waiting: function(){
-          $("#await").show();
-        },
-
-        ready: function(){
-          $("#await").hide();
-          $("#overlay").hide();
-        },
+        //functions registered to the app
+        registerDragAndDrop: registerDragEvents;
+        waiting: waiting,
+        ready: ready,
+        joinRoom: joinRoom,
+        pullCard: pullCard,
+        drag: dragEvent,
         
-        newRound: function(data){
+        //functions that should remain defined
+        init: function(){
 
-        },
+          var stringOfElements = draggableElements.join(",")
+              , htmlToPassToDraggable = $(stringOfElements).toArray()
+              , dragndrop = dragula(htmlToPassToDraggable);
 
-        joinRoom: function(){
-          var roomId = $("#room").data("room");
-          App.gameId = roomId;
-          IO.socket.emit("join", {room: roomId});
-        },
+          App.registerDragAndDrop(dragndrop);
+          App.overlay.show();
+        }
+        
 
-        move: function(e){
-          e.preventDefault();
-        },
-
-        drag: function(el, source){
-          var dropLocation = $(source).data("decktype");
-          App.pulledFrom = dropLocation;
-          App.referencedElement = source;
-
-          IO.socket.emit("pullACard", {room: App.gameId,  pile: dropLocation, playerId: App.currentPlayer});
-        },
-
-        dragEnd: function(el){
-        },
 
         drop: function(el, target, source){
           var dropLocation = $(target).data("decktype");
+
           if(App.pulledFrom == "playerhand" && dropLocation == "deck"){
             dragndrop.cancel(true);
             return;            
@@ -280,12 +118,6 @@ block footerScripts
           }
         },
       
-        over: function(el, container, source){
-          console.log("over ele: ", el);
-          console.log("over container: ", container);
-          console.log("over sourcce: ", source);
-        },
-
         stopDragging: function(){
           dragndrop.end();
         }
@@ -298,9 +130,44 @@ block footerScripts
       });
 
       IO.init();
+
+    });
+
+    function drop(el, source) {
+      var dropLocation = $(source).data("decktype");
+
+      App.pulledFrom = dropLocation;
+      App.referencedElement = source;
+    };
+
+    function pullCard(destination, playerID) {
+      IO.socket.emit("pullACard", {room: App.gameId,  pile: dropLocation, playerId: App.currentPlayer});
+    }
+
+    function joinRoom() {
+      IO.socket.emit("join", {room: App.roomID});
+    };
+
+    function waiting() {
+      App.loading.show();
+    }
+
+    function hideOverlays() {
+      App.loading.hide();
+      App.overlay.hide();
+    }
+
+    function registerDragEvents(dragndrop) {
       dragndrop.on("cancel", App.drop);
       dragndrop.on("dragend", App.dragEnd);
       dragndrop.on("drag", App.drag);
       dragndrop.on("drop", App.drop);
+    }
 
-    });
+    function kickout() {
+      window.location = "/lobby";
+    }
+
+    function connected() {
+      App.init();
+    }
