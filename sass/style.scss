@@ -1,0 +1,309 @@
+#table{
+  background-color: green;
+  height: 100%;
+  width: 100%;
+  position: relative;
+}
+
+/* Card information */
+.card{
+  position: relative;
+  float: left;
+  margin-right: 10px;
+  width: 60px;
+  height: 90px;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 3px 3px 7px rgba(0,0,0,0.3);
+  
+  p {
+    text-align: center;
+    font: 30px/90px Georgia, Times New Roman, serif;
+    margin-bottom: 0;
+  }
+  
+}
+
+[class*="D_"]{
+  &:before, &:after {
+    content: "♦";
+    color: #ff0000;
+  }
+  
+  &:before {
+    position: absolute;
+    font-size: 25px;
+    left: 5px;
+    top: -10px;
+  }
+
+  &:after{
+    position: absolute;
+    font-size: 25px;
+    right: 5px;
+    bottom: -5px;
+  }
+}
+
+[class*="H_"]{
+  &:before, &:after {
+    content: "♥";
+    color: #ff0000;
+  }
+
+  &:before {
+    position: absolute;
+    font-size: 25px;
+    left: 5px;
+    top: -10px;
+  }
+
+  &:after{
+    position: absolute;
+    font-size: 25px;
+    right: 5px;
+    bottom: -5px;
+  }
+}
+ 
+[class*="C_"]{
+  &:before, &:after {
+    content: "♣";
+    color: #000;
+  } 
+
+  &:before {
+    position: absolute;
+    font-size: 25px;
+    left: 5px;
+    top: -10px;
+  }
+
+  &:after{
+    position: absolute;
+    font-size: 25px;
+    right: 5px;
+    bottom: -5px;
+  } 
+}
+
+ 
+[class*="S_"]{
+  &:before, &:after {
+    content: "♠";
+    color: #000;
+  }
+  
+  &:before {
+    position: absolute;
+    font-size: 25px;
+    left: 5px;
+    top: -10px;
+  }
+
+  &:after{
+    position: absolute;
+    font-size: 25px;
+    right: 5px;
+    bottom: -5px;
+  }
+}
+
+.gu-mirror {
+  position: fixed !important;
+  margin: 0 !important;
+  z-index: 9999 !important;
+  opacity: 0.8;
+  filter: alpha(opacity=80);
+}
+.gu-hide {
+  display: none !important;
+}
+.gu-unselectable {
+  user-select: none !important;
+}
+.gu-transit {
+  opacity: 0.2;
+  filter: alpha(opacity=20);
+}
+
+#deck, #discard{
+  position:relative;
+  
+  &.card{
+    margin: 0 10px;
+  }
+
+  .card{
+    margin: 0;
+  }
+
+  span{
+    position: absolute;
+  }
+}
+/* Card end */
+
+/* Player information */
+[id~="player"], #me{
+  position: absolute;
+}
+
+#me{
+  bottom: 15px;
+  left: 30vw;
+}
+
+#player-2{
+  left: -156px;
+  bottom: 45vh;
+  transform: rotate(90deg);
+}
+
+#player-3{
+  left: 24vw;
+  top: 4vh;
+  transform: rotate(180deg);
+}
+
+#player-4{
+  transform: rotate(270deg);
+}
+/* Player end */
+
+/* Table Information */
+#middle-of-table{
+  left: 40vw;
+  top: 35vh;
+  position: absolute;
+}
+
+#overlay{
+  z-index: 999;
+  background-color: rgba(0,0,0,.45);
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  bottom: 0;
+  color: white;
+
+  .wrapper{
+    position: relative;
+  }
+
+  #start-button{
+    position: absolute;
+    left: 42vw;
+    top: 37vh;
+    border-radius: 4px;
+    background-color: blue;
+    padding: 15px;
+  }
+
+  #shareRoom{
+    position: absolute;
+    left: 34vw;
+    top: 46vh;
+    text-align: center;
+  }
+}
+
+#await{
+  z-index: 999;
+  font-family: Arial;
+  background-color: rgba(0,0,0, .85);
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  bottom: 0;
+  color: white;
+  display: none;
+
+  .wrapper{
+    position: relative;
+  }
+
+  .fountainTextG{
+    color: #969696;
+    font-size: 55px;
+    text-decoration: none;
+    font-weight: normal;
+    font-style: normal;
+    float: left;
+    animation-name: bounce_fountainTextG;
+    animation-duration: 2.09s;
+    animation-iteration-count: infinite;
+    animation-direction: normal;
+    transform: scale(.5);
+  }
+
+  #fountainTextG{
+    position: relative;
+    top: 35vh;
+    left: 30vw;
+  }
+
+  #fountainTextG_1{
+    animation-delay: 0.75s;
+  }
+
+  #fountainTextG_2{
+    animation-delay: 0.9s;
+  }
+
+  #fountainTextG_3{
+    animation-delay: 1.05s;
+  }
+
+  #fountainTextG_4{
+    animation-delay: 1.2s;
+  }
+
+  #fountainTextG_5{
+    animation-delay: 1.35s;
+  }
+
+  #fountainTextG_6{
+    animation-delay: 1.5s;
+  }
+
+  #fountainTextG_7{
+    animation-delay: 1.64s;
+  }
+
+  #fountainTextG_8{
+    animation-delay: 1.79s;
+  }
+
+  #fountainTextG_9{
+    animation-delay: 1.94s;
+  }
+
+  #fountainTextG_10{
+    animation-delay: 2.09s;
+  }
+
+  @keyframes bounce_fountainTextG{
+    0%{
+      transform:scale(1);
+      color: #969696;
+    }
+
+    100%{
+      transform:scale(.5);
+      color: rgb(255,255,255);
+    }
+  }
+}
+.dealer.active::before{
+    content: '';
+    display: block;
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    margin: 0 auto;
+    background-color: #D0AE2A;
+}
+/* Table informattion end*/

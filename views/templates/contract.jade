@@ -1,0 +1,28 @@
+table
+  thead
+    tr
+      th Name
+      th Add Contract
+  tbody
+    each contract in contracts
+      tr.contract(data-id="#{contract.id}")
+        td.name #{contract.name} 
+          span(title="#{contract.description}")
+            i.fa.fa-info-circle(title="#{contract.description}")
+        td 
+          a(href="#").addContract Choose Contract
+
+script.
+  $(function(){
+    $(".addContract").click(function(e){
+      e.preventDefault();
+      $parent = $(this).closest(".contract");  
+      var id = $parent.data("id");
+      var name = $parent.find(".name")[0].innerText;
+      
+      $.post("/setContract", {name: name, contractId: id}, function(){
+        $.fancybox.close(true);
+      });
+
+    });
+  });
