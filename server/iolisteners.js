@@ -6,7 +6,7 @@ module.exports = function(app, io){
   var games = {};
 
   app.get('/table', function(req, res) {
-      share = generateRoom(6);
+      share = generateID(6);
       res.render('table/play.jade', {shareURL: req.protocol + '://' + req.get('host') + req.path + "/" + share, share: share});
   });
 
@@ -16,7 +16,7 @@ module.exports = function(app, io){
       if(req.params.room && (req.params.room in games)) {
         share = req.params.room;
       }else {
-        share = generateRoom(6);
+        share = generateID(6);
         req.path = "/table/"+share;
       }
 
@@ -24,59 +24,65 @@ module.exports = function(app, io){
   });
 
   io.sockets.on("connection", function(socket) {
+    
+    socket.currentRoom = null;
+    socket.player = null;
+    socket.playerID = null;
+    socket.game = null;
 
-    socket.emit('connected', {message: "You are Connected!"});
+    socket.emit('connected');
 
     socket.on("join", function(data){
-      var noOppents;
+      
+      var noOppents
+          , game
+          , player
+          , roomID = data.room;
 
-      if(data.room in games) {
+      //try to find a game room
+      if(roomID in games) {
 
-        if(games[data.room].players.length >= 4 || games[data.room].started) {
+        //a game exists in the games object
+        game = games[roomID];
+
+        //no one can go into the room once its full or started
+        if(game.noOfPlayers >= 4 || game.started) {
           socket.emit("goToLobby");
           return;
         }
+
+        //have the socket subscribe to the room
+        socket.join(roomID);
+        
+        //now make a new player, deal out a new hand from the deck
+        player = new Player(game.dealNewHand());
       
-        socket.join(data.room);
+        //let everyone else know that a new player has joined
+        socket.broadcast.to(roomID).emit('setPlayer', {players: [player], length: 7, message: "player joined room"});
 
-        var player = new Player(1, games[data.room].deck.deal(7));
-        player.number = games[data.room].players.length + 1;
-
-        socket.currentRoom = data.room;
-        socket.player = player;
-
-        socket.broadcast.to(data.room).emit('setPlayer', {players: [player], length: 7, message: "player joined room"});
-
+        //if there are too many people, let everyone know that there is a new game
         if(games[data.room].players.length == 4){
           io.sockets.in(data.room).emit('startGame');
         }
 
       } else {
-        games[data.room] = {
-          players: [],
-          deck: new deck(),
-          currentPlayer: null,
-          currentPlayerHand: null,
-          currentDealer: null,
-          cardPulled: null,
-          discardPile : [],
-          started: false,
-          currentRound: 0,
-          finished: false
-        };
 
-        var player = new Player(1, games[data.room].deck.deal(7));
-        socket.currentRoom = data.room;
-        socket.player = player;
+        //if none, then make a new game and join the room
+        game = games[data.room] = new Game(data.room);
+        player = new Player(game.dealNewHand());
         socket.join(data.room);
       }
-
-      games[data.room]["deckLength"] = games[data.room].deck.deck.length;
       
-      socket.emit("handSetUp", {gameId : data.room, hand: player.hand, id: player.id, players: games[data.room].players});
-      
-      games[data.room].players.push(player);
+      //add the new player that was created
+      game.addPlayer(player);
 
+      //add the room to the person's socket
+      socket.currentRoom = roomID;
+      socket.player = player;
+      socket.game = game;
+
+      //setup the hand 
+      socket.emit("handSetUp", {gameId : roomID, hand: player.hand, id: player.id, players: game.players});
     });
     
     socket.on('startGame', function(data){
@@ -114,18 +120,11 @@ module.exports = function(app, io){
         chooseNewDealer();
       }
     });
-    
-    function chooseNewDealer(){
-      var numberOfPlayers = games[socket.currentRoom].players.length;
-      var randomPlayer = Math.floor(Math.random() * numberOfPlayers);
-      var player = games[socket.currentRoom].players[randomPlayer];
-      games[socket.currentRoom].currentDealer = player;
-      io.sockets.in(socket.currentRoom).emit('changeTurn', {dealer: player.number});
-
-    }
 
     socket.on('newRound', function(){
+
       games[socket.currentRoom].currentRound++;
+
       if(!games[socket.currentRound].finished){
         socket.broadcast.to(socket.currentRoom).emit('renderContract');
       }else{
@@ -266,10 +265,6 @@ module.exports = function(app, io){
       }
     });
 
-    function validateHand(hand, player){
-      return validation(hand, player);
-    }
-
     function updateHand(data){
       if(data.discardedCard){
         var placeInHand = games[data.room].currentPlayerHand.indexOf(data.discardedCard);
@@ -293,18 +288,6 @@ module.exports = function(app, io){
       }
     }
 
-    function FindCurrentPlayerIndex(players, id){
-      var whichIndex = -1;
-
-      players.forEach(function(el, index){
-        if(el.id === id){
-          whichIndex = index;
-          return;         
-        }
-      });
-
-      return whichIndex;
-    }
 
     function changeTurn(data){
       var currentPlayer = data.playerId;
@@ -341,19 +324,150 @@ module.exports = function(app, io){
   });
 };
 
-function Player(number, hand) {
-  this.number = number;
-  this.id = generateRoom(5);
+function Game(roomID) {
+  //player information
+  this.players = [];
+  this.noOfPlayers = 0;
+  this.currentPlayer =  null,
+  this.currentPlayerHand =  null,
+  this.dealer = null,
+  
+  //cards information
+  this.deck = new deck(),
+  this.cardPulled = null;
+  this.discardPile = [];
+  
+  //round states & room information
+  this.currentRound = 0;
+  this.finished =  false;
+  this.started = false;
+  this.roomID = roomID;
+
+  return this;
+}
+
+Game.prototype.resetDeck = function() {
+  this.deck = new deck();
+};
+
+Game.prototype.isStillChoosing = function() {
+  var flag = true;
+
+  this.players.forEach(function(e,i){
+    if(!e.choosenContract){
+      flag = false;
+      return;
+    }
+  });
+
+  return flag;
+};
+
+Game.prototype.changePlayer = function() {
+ var currentPlayerIndex = findPlayerIndex(this.currentPlayer.id); 
+ var nextPersonToGet = currentPlayerIndex + 1;
+ var newPlayer = this.players[nextPersonToGet % this.noOfPlayers];
+ 
+ this.currentPlayer = newPlayer;
+
+};
+
+Game.prototype.isPlayerAllowedInRoom = function(id) {
+  var id = this.findPlayerIndex(id);
+  
+  if(id = -1){
+    return false;
+  }
+
+  return true;
+};
+
+Game.prototype.dealHand = function(cardNum) {
+  cardNum = (cardNum && cardNum > 0) ? cardNum : 7;
+  var dealtHand = this.deck.deal(cardNum, true);
+
+  return dealtHand;
+};
+
+Game.prototype.dealNewHand = function() {
+  var newHand = this.dealHand(7);
+  return newHand;
+};
+
+Game.prototype.setNewDealer = function(io) {
+  var length = this.players.length;
+  var randomPlayerIndex = Math.floor(Math.random() * length);
+
+  var newDealer = this.players[randomPlayerIndex];
+  this.dealer = newDealer;
+  io.sockets.in(data.room).emit('changeDealer');
+};
+
+Game.prototype.addPlayer = function(player) {
+  this.players.push(player);
+  this.noOfPlayers++;
+};
+
+Game.prototype.getPlayer = function(playerId) {
+  var playerIndex = this.findPlayerIndex(playerId);
+  
+  if(playerIndex != -1){
+    return this.players[playerIndex];
+  }
+  
+  return null;
+};
+
+Game.prototype.findPlayerIndex = function(id){
+
+  var foundIndex = -1;
+
+  this.players.forEach(function(e,i,a){
+    if(e.id == playerId){
+     foundIndex = index;
+     return;
+    }
+  });
+
+  return foundIndex;
+}
+
+Game.prototype.resetRound = function() {
+  this.players.forEach(function(e,i,a){
+    e.choosenContract = false;
+    e.hand = null;
+    e.discarded = true;
+    e.currentContract = null;
+  });
+};
+
+function Player(hand) {
+  this.id = generateID(5);
   this.hand = hand;
   this.discarded = false;
   this.currentContract = null;
   this.contract = [];
   this.roundWon = 0;
   this.choosenContract = false;
+
   return this;
 }
 
-function generateRoom(length) {
+Player.prototype.validateHand = function() {
+  return validation(this.hand, this);
+};
+
+Player.prototype.addContract = function(contract) {
+  this.contract.push(contract);
+};
+
+Player.prototype.changeContract = function(contract) {
+  this.currentContract = contract;
+  this.choosenContract = true;
+  this.addContract(contract);
+};
+
+function generateID(length) {
   var haystack = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
   var room = '';
 

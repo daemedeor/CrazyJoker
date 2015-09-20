@@ -16,7 +16,7 @@ block content
       a#start-button.button(href="#") Start Game
 
       #shareRoom
-        label(for="url") Url of the room (if you want to invite specific people)
+        label(for="url") Room URL
         div(data-room="#{share}", id="room") #{shareURL}
   
   #await
@@ -42,14 +42,14 @@ block headerScripts
   script(src="/js/jquery.fancybox.js")
 
 block footerScripts
+
   script(src='/socket.io/socket.io.js')
+  script(src='/js/frontEndLogic.js')
 
   script.
-
     $(function(){
 
-      var IO = {
-
+      IO = {
         init: function(){
           IO.socket = io.connect();
           IO.bindEvents();
@@ -58,14 +58,16 @@ block footerScripts
         bindEvents: function(){
           IO.socket.on('connected', IO.connected);
           IO.socket.on('goToLobby', IO.kickout);
+          IO.socket.on('handSetUp', App.handSetup);
+          IO.socket.on('setPlayer', App.setPlayer);
         },
-  
+        
         kickout: kickout,
-        connected: connected
+        connected: connected,
 
       };
 
-      var App = {
+      App = {
         
         //elements of the game
         draggableElements: [".hand", "#deck", "#discard"],
@@ -74,100 +76,75 @@ block footerScripts
         roomID: $("#room").data("room"),
         loading: $("#await"),
         overlay: $("#overlay"),
+        startButton: $("#start-button"),
         fromHand: '',
         referencedElement: '',
+        dragndrop: null,
 
         //functions registered to the app
-        registerDragAndDrop: registerDragEvents;
-        waiting: waiting,
-        ready: ready,
-        joinRoom: joinRoom,
-        pullCard: pullCard,
-        drag: dragEvent,
-        
-        //functions that should remain defined
-        init: function(){
+        registerDragEvents: null,
+        waiting: null,
+        joinRoom: null,
+        pullCard: null,
+        drag: null,
+        drop: null,
+        stopDragging: null,
+        startGame: null,
+        newRound: null,
+        handSetup: null,
+        setPlayer: null,
 
-          var stringOfElements = draggableElements.join(",")
-              , htmlToPassToDraggable = $(stringOfElements).toArray()
-              , dragndrop = dragula(htmlToPassToDraggable);
+        //functions that should remain defined on the table
+        init: function() {
 
-          App.registerDragAndDrop(dragndrop);
           App.overlay.show();
-        }
-        
 
+          var stringOfElements = App.draggableElements.join(",")
+              , htmlToPassToDraggable = $(stringOfElements).toArray()
+              , dragndrop;
+          
+          dragndrop = App.dragndrop = dragula(htmlToPassToDraggable);
+          
+          App.registerEvents();
+          App.registerDragEvents(dragndrop);
 
-        drop: function(el, target, source){
-          var dropLocation = $(target).data("decktype");
-
-          if(App.pulledFrom == "playerhand" && dropLocation == "deck"){
-            dragndrop.cancel(true);
-            return;            
-          }else if(dropLocation == "discard" && dropLocation != App.pulledFrom){
-            var cardToDiscard = $(el).data("card");
-            IO.socket.emit("discardCard", {room: App.gameId, pile: dropLocation, card: cardToDiscard})
-            return;            
-          }else if(dropLocation == "playerhand" && App.validMove){
-            App.referencedElement = el;
-            IO.socket.emit("addToHand", {player: App.currentPlayer, room: App.gameId});
-            return;            
-          }else if(dropLocation != "playerhand"){
-            IO.socket.emit("placeBack", {room: App.gameId, deckType: dropLocation});
-            $(el).remove();  
-          }
+          App.startButton.click(function(e){
+            e.preventDefault();
+            App.startGame();
+          });
         },
-      
-        stopDragging: function(){
-          dragndrop.end();
+
+        registerEvents: function() {
+
+          //drag and drop activities
+          App.registerDragEvents = registerDragEvents;
+          App.drag = drag;
+          App.drop = drop;
+          App.stopDragging = dragStop;
+          
+          //activities relating to room state
+          App.waiting = waiting;
+          App.joinRoom = joinRoom;
+          App.startGame = startGame;
+          //App.newRound = newRound;
+          
+          //activities relating to a person
+          App.pullCard = pullCard;
+          App.setPlayer = setPlayer;
+          App.handSetup = handSetup;
+
         }
-
       }
-
-      $("#start-button").click(function(e){
-        e.preventDefault();
-        IO.startGame();
-      });
 
       IO.init();
 
+      function kickout() {
+        window.location = "/lobby";
+      }
+
+      function connected() {
+        App.init();
+      }
     });
 
-    function drop(el, source) {
-      var dropLocation = $(source).data("decktype");
-
-      App.pulledFrom = dropLocation;
-      App.referencedElement = source;
-    };
-
-    function pullCard(destination, playerID) {
-      IO.socket.emit("pullACard", {room: App.gameId,  pile: dropLocation, playerId: App.currentPlayer});
-    }
-
-    function joinRoom() {
-      IO.socket.emit("join", {room: App.roomID});
-    };
-
-    function waiting() {
-      App.loading.show();
-    }
-
-    function hideOverlays() {
-      App.loading.hide();
-      App.overlay.hide();
-    }
-
-    function registerDragEvents(dragndrop) {
-      dragndrop.on("cancel", App.drop);
-      dragndrop.on("dragend", App.dragEnd);
-      dragndrop.on("drag", App.drag);
-      dragndrop.on("drop", App.drop);
-    }
-
-    function kickout() {
-      window.location = "/lobby";
-    }
-
-    function connected() {
-      App.init();
-    }
+  
