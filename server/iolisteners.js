@@ -28,7 +28,6 @@ module.exports = function(app, io){
     socket.currentRoom = null;
     socket.player = null;
     socket.playerID = null;
-    socket.game = null;
 
     socket.emit('connected');
 
@@ -51,27 +50,18 @@ module.exports = function(app, io){
           return;
         }
 
-        //have the socket subscribe to the room
-        socket.join(roomID);
-        
         //now make a new player, deal out a new hand from the deck
         player = new Player(game.dealNewHand());
       
         //let everyone else know that a new player has joined
-        socket.broadcast.to(roomID).emit('setPlayer', {players: [player], length: 7, message: "player joined room"});
-
-        //if there are too many people, let everyone know that there is a new game
-        if(games[data.room].players.length == 4){
-          io.sockets.in(data.room).emit('startGame');
-        }
+        emitToEveryoneButSelf('setPlayer', {players: [player], length: 7, message: "A new player has joined"});
 
       } else {
-
         //if none, then make a new game and join the room
         game = games[data.room] = new Game(data.room);
         player = new Player(game.dealNewHand());
-        socket.join(data.room);
       }
+      
       
       //add the new player that was created
       game.addPlayer(player);
@@ -79,22 +69,26 @@ module.exports = function(app, io){
       //add the room to the person's socket
       socket.currentRoom = roomID;
       socket.player = player;
-      socket.game = game;
+      socket.join(roomID);
+
+      updateGame(roomID, game);
 
       //setup the hand 
       socket.emit("handSetUp", {gameId : roomID, hand: player.hand, id: player.id, players: game.players});
-    });
-    
-    socket.on('startGame', function(data){
-      sessionService.setSessionProperty(socket.request.session, "alreadyPlayedContracts", [], function (err, data) {
-        if (err) {
-          callback(err);
-          return;
-        }
 
-        io.sockets.in(socket.currentRoom).emit('renderContract');
-        games[socket.currentRoom].started = true;
-      });
+      //if there are too many people, let everyone know that there is a new game
+      if(game.noOfPlayers == 4){
+        emitToEveryone('startGame', {message: "A new game has started"});
+      }
+    });
+ 
+    socket.on('startGame', function(data){
+      var game = getGame(socket.currentRoom);
+      
+      game.started = true;
+      game.setNewDealer();
+
+      updateGame(game);
     });
 
     socket.on('letRoomKnow', function(){
@@ -233,6 +227,19 @@ module.exports = function(app, io){
       var isValid = validateHand(games[socket.currentRoom].currentPlayerHand, games[socket.currentRoom].currentPlayer);
       socket.emit("validate", {isValid: isValid}); 
     });
+    
+    function setSession(property, value, cb){
+        sessionService.setSessionProperty(socket.request.session, property, value, function(err, data){
+          if(err){
+            cb(err);
+            return;
+          }
+          if(cb)
+            cb(data);
+        })
+    }
+
+
 
     socket.on('disconnect', function(data) {
       var foundIndex, player;
@@ -288,39 +295,25 @@ module.exports = function(app, io){
       }
     }
 
-
-    function changeTurn(data){
-      var currentPlayer = data.playerId;
-      var allPlayers = games[data.room].players;
-      var position = 0;
-      allPlayers.forEach(function(element,index){
-        if(currentPlayer == element.id){
-          index++;
-          currentPlayerPosition = (index < games[data.room].players.length) ? index : 0;
-          position = currentPlayerPosition;
-          var nextPlayer = games[data.room].players[currentPlayerPosition];
-          games[data.room].currentPlayer = nextPlayer;
-          return;
-        }
-      });
-
-      return currentPlayerPosition;
+    function emitToEveryone(action, data){
+      io.sockets.in(socket.currentRoom, data).emit(action);
+    }
+    
+    function emitToEveryoneButSelf(action, data){
+      socket.broadcast.to(socket.currentRoom).emit(action, data);
     }
 
-    function isPlayerInRoom(room, currentPlayer){
-      var currentPlayers = games[room].players;
-      var flag = false;
+    function getGame(id){
+      if(id in games) {
+        return games[id];
+      }
 
-      currentPlayers.forEach(function(player){
-        if(player.id === currentPlayer){
-          flag = true;
-          return;
-        };
-      });
-
-      return flag;
+      return false;
     }
 
+    function updateGame(id, game){
+      games[id] = game;
+    }
   });
 };
 
@@ -400,7 +393,6 @@ Game.prototype.setNewDealer = function(io) {
 
   var newDealer = this.players[randomPlayerIndex];
   this.dealer = newDealer;
-  io.sockets.in(data.room).emit('changeDealer');
 };
 
 Game.prototype.addPlayer = function(player) {
