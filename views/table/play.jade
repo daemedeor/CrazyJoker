@@ -60,6 +60,7 @@ block footerScripts
           IO.socket.on('goToLobby', IO.kickout);
           IO.socket.on('handSetUp', App.handSetup);
           IO.socket.on('setPlayer', App.setPlayer);
+          IO.socket.on('startGame', App.startGame);
         },
         
         kickout: kickout,
@@ -92,6 +93,7 @@ block footerScripts
         drop: drop,
         stopDragging: stopDragging,
         startGame: startGame,
+        hideOverlays: hideOverlays,
         //- newRound: newRound,
         handSetup: handSetup,
         setPlayer: setPlayer,
@@ -116,7 +118,7 @@ block footerScripts
 
       App.startButton.click(function(e){
         e.preventDefault();
-        App.startGame();
+        IO.socket.emit("startGame");
       });
 
       function kickout() {
@@ -132,8 +134,11 @@ block footerScripts
         dragndrop.end();
       }
 
-      function startGame(){
-        IO.socket.emit("startGame");
+      function startGame(data){
+        App.hideOverlays();
+        $.get("/contracts", {}, function(html){
+            $.fancybox(html, { closeBtn: false});
+        });
       }
 
       function drop(el, target, source) {

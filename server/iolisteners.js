@@ -74,22 +74,18 @@ module.exports = function(app, io){
       updateGame(roomID, game);
 
       //setup the hand 
-      socket.emit("handSetUp", {gameId : roomID, hand: player.hand, id: player.id, players: game.players});
+      socket.emit("handSetUp", {gameId : roomID, hand: player.hand, id: player.id});
 
       //if there are too many people, let everyone know that there is a new game
       if(game.noOfPlayers == 4){
-        emitToEveryone('startGame', {message: "A new game has started"});
+        startGame();
       }
     });
  
     socket.on('startGame', function(data){
-      var game = getGame(socket.currentRoom);
-      
-      game.started = true;
-      game.setNewDealer();
-
-      updateGame(game);
+      startGame();
     });
+
 
     socket.on('letRoomKnow', function(){
       var isStillChoosing = false
@@ -227,20 +223,7 @@ module.exports = function(app, io){
       var isValid = validateHand(games[socket.currentRoom].currentPlayerHand, games[socket.currentRoom].currentPlayer);
       socket.emit("validate", {isValid: isValid}); 
     });
-    
-    function setSession(property, value, cb){
-        sessionService.setSessionProperty(socket.request.session, property, value, function(err, data){
-          if(err){
-            cb(err);
-            return;
-          }
-          if(cb)
-            cb(data);
-        })
-    }
-
-
-
+  
     socket.on('disconnect', function(data) {
       var foundIndex, player;
       if(games[socket.currentRoom]){
@@ -272,6 +255,16 @@ module.exports = function(app, io){
       }
     });
 
+    function startGame(){
+      var game = getGame(socket.currentRoom);
+      
+      game.started = true;
+      game.setNewDealer();
+      setSession("alreadyPlayedContracts", [], emitToEveryone('startGame', {message: "Starting a new game", dealer: game.dealer.id}));
+
+      updateGame(game);
+    }
+
     function updateHand(data){
       if(data.discardedCard){
         var placeInHand = games[data.room].currentPlayerHand.indexOf(data.discardedCard);
@@ -294,9 +287,20 @@ module.exports = function(app, io){
         socket.emit("validate", {isValid: isValid}); 
       }
     }
+    
+    function setSession(property, value, cb) {
+        sessionService.setSessionProperty(socket.request.session, property, value, function(err, data){
+          if(err){
+            cb(err);
+            return;
+          }
+          if(cb)
+            cb(data);
+        });
+    }
 
     function emitToEveryone(action, data){
-      io.sockets.in(socket.currentRoom, data).emit(action);
+      io.sockets.in(socket.currentRoom).emit(action, data);
     }
     
     function emitToEveryoneButSelf(action, data){

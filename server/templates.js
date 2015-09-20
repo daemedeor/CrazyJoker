@@ -1,7 +1,5 @@
 module.exports = function(app, socket, db){
   app.get("/contracts", function(req, res){
-
-
     db.Contracts.findAll().then(function(contracts){
       var alreadyPlayedContracts = req.session.alreadyPlayedContracts;
 
