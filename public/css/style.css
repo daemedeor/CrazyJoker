@@ -1,6 +1,8 @@
 @charset "UTF-8";
 #table { background-color: green; height: 100%; width: 100%; position: relative; }
 
+.fancybox-lock .fancybox-overlay, html, body { overflow: hidden !important; }
+
 /* Card information */
 .card { position: relative; float: left; margin-right: 10px; width: 60px; height: 90px; border-radius: 10px; background: #fff; box-shadow: 3px 3px 7px rgba(0, 0, 0, 0.3); }
 .card p { text-align: center; font: 30px/90px Georgia, Times New Roman, serif; margin-bottom: 0; }
@@ -36,9 +38,10 @@
 
 /* Card end */
 /* Player information */
-[id~="player"], #me { position: absolute; }
+[id^="player"] { position: absolute; display: none; }
+[id^="player"][data-id] { display: block; }
 
-#me { bottom: 15px; left: 30vw; }
+#me { position: absolute; bottom: 15px; left: 30vw; }
 
 #player-2 { left: -156px; bottom: 45vh; transform: rotate(90deg); }
 

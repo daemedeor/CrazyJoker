@@ -5,14 +5,14 @@ var Deck = function(numberOfDecks, suits){
   this.suits = (suits) ? suits : ["H", "S", "C", "D"];
 
   this.deck = [];
-  this.cardsInDeck = this.deck.length; 
   this.id = guid();
 
   do{
     this.addAnotherDeck();
     numberOfDecks--;
   }while(numberOfDecks > 0)
-
+  
+  this.cardsInDeck = this.deck.length; 
   this.shuffle();
 
   return this;

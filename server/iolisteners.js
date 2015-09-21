@@ -34,15 +34,13 @@ module.exports = function(app, io){
     socket.on("join", function(data){
       
       var noOppents
-          , game
           , player
-          , roomID = data.room;
-
+          , roomID = data.room
+          , game = getGame(roomID);
+          socket.currentRoom = roomID;
+      
       //try to find a game room
-      if(roomID in games) {
-
-        //a game exists in the games object
-        game = games[roomID];
+      if(game) {
 
         //no one can go into the room once its full or started
         if(game.noOfPlayers >= 4 || game.started) {
@@ -54,27 +52,28 @@ module.exports = function(app, io){
         player = new Player(game.dealNewHand());
       
         //let everyone else know that a new player has joined
-        emitToEveryoneButSelf('setPlayer', {players: [player], length: 7, message: "A new player has joined"});
+        emitToEveryoneButSelf('setPlayer', {players: [player.id], message: "A new player has joined"});
 
       } else {
         //if none, then make a new game and join the room
-        game = games[data.room] = new Game(data.room);
+        game = new Game(roomID);
         player = new Player(game.dealNewHand());
       }
       
       
       //add the new player that was created
       game.addPlayer(player);
-
-      //add the room to the person's socket
-      socket.currentRoom = roomID;
-      socket.player = player;
       socket.join(roomID);
 
-      updateGame(roomID, game);
+      //add the room to the person's socket
+      socket.player = player;
+      socket.playerID = player.id;
+      updateGame(game);
+
+      var allIds = game.filterPlayerIds([player.id]);
 
       //setup the hand 
-      socket.emit("handSetUp", {gameId : roomID, hand: player.hand, id: player.id});
+      socket.emit("handSetUp", {gameId : roomID, hand: player.hand, id: player.id, players: allIds});
 
       //if there are too many people, let everyone know that there is a new game
       if(game.noOfPlayers == 4){
@@ -87,39 +86,32 @@ module.exports = function(app, io){
     });
 
 
-    socket.on('letRoomKnow', function(){
-      var isStillChoosing = false
-          , players = games[socket.currentRoom].players
-          , session = socket.request.session
-          , playerID = socket.player.id;
+    socket.on('contractDecided', function(data){
+      console.log("choosing contract");
 
-      var currentPlayer = FindCurrentPlayerIndex(players, playerID);
+      var game = getGame(socket.currentRoom);
+      var currentContract = socket.request.session["currentContract"];
+      
+      game.setPlayerContract(socket.player.id, currentContract);
+      
+      var areAllGameContractsSet = game.contractsAllSet();
+      console.log(areAllGameContractsSet);
 
-      if(currentPlayer != -1){
-        players[currentPlayer].choosenContract = true;
-        players[currentPlayer].currentContract = session.currentContract;
+      if(areAllGameContractsSet){
+        emitToEveryone('startNewRoundLogic', {message: "Game has officially started"});
+        game.currentRound++;
       }
 
-      players.forEach(function(e,i,a){
-        if(!e.choosenContract){
-          isStillChoosing = true;
-          return;
-        }
-      });
-      if(!isStillChoosing){
-        chooseNewDealer();
-      }
+      updateGame(socket.currentRoom, game);
     });
 
     socket.on('newRound', function(){
-
-      games[socket.currentRoom].currentRound++;
-
       if(!games[socket.currentRound].finished){
         socket.broadcast.to(socket.currentRoom).emit('renderContract');
       }else{
         socket.broadcast.to(socket.currentRoom).emit('finished');
       }
+
     });
 
     socket.on('pullACard', function(data){
@@ -215,42 +207,36 @@ module.exports = function(app, io){
     });
 
     socket.on("changeTurn", function(data){
-      var badgePosition = changeTurn(data);
-      socket.emit("turnChanged", { position : badgePosition});    
+      var game = getGame(socket.currentRoom);
+      game.changePlayer();
+
+      socket.emit("turnChanged", { nextPlayerId: game.currentPlayer.id});
+
+      updateGame(socket.currentRoom, game);   
     });
 
     socket.on("validate", function(){
-      var isValid = validateHand(games[socket.currentRoom].currentPlayerHand, games[socket.currentRoom].currentPlayer);
+      var game = getGame(socket.currentRoom);
+      var isValid = game.currentPlayer.validateHand(game.currentPlayerHand, game.currentPlayer);
       socket.emit("validate", {isValid: isValid}); 
     });
   
     socket.on('disconnect', function(data) {
-      var foundIndex, player;
-      if(games[socket.currentRoom]){
 
-        games[socket.currentRoom].players.forEach(function(el, index){
-          if(el.id == socket.currentPlayerId){
-           foundIndex = index;
-          }
-        });
+      var game = getGame(socket.currentRoom);
+  
+      if(game && socket.player){
 
-        if(foundIndex > -1){
-           player = games[socket.currentRoom].players.splice(foundIndex,1);
-          
-          if(player[0]){
-            if(player[0].number == 1){
-              player[0].number = 2;
-            }
-            socket.broadcast.to(socket.currentRoom).emit('left', {player: player[0].number, message: "player left"});
-          }else{
-            socket.broadcast.to(socket.currentRoom).emit('left', {message: "player left"});
-          }
+        if(socket.player.id){
+          game.removePlayer(socket.player.id);
+        }
 
-          if(games[socket.currentRoom].players.length <= 0){
-            delete games[socket.currentRoom];
-            console.log("deleted a room");
-          }
-
+        if(game.noOfPlayers <= 0){
+          delete games[socket.currentRoom];
+          console.log("deleted a room");
+        }else{
+          updateGame(game);
+          emitToEveryoneButSelf('playerLeft', {message: "A player disconnected!", playerId: socket.player.id});
         }
       }
     });
@@ -308,15 +294,11 @@ module.exports = function(app, io){
     }
 
     function getGame(id){
-      if(id in games) {
-        return games[id];
-      }
-
-      return false;
+      return games[id];
     }
 
-    function updateGame(id, game){
-      games[id] = game;
+    function updateGame(game){
+      games["" + socket.currentRoom + ""] = game;
     }
   });
 };
@@ -338,7 +320,7 @@ function Game(roomID) {
   this.currentRound = 0;
   this.finished =  false;
   this.started = false;
-  this.roomID = roomID;
+  this.roomID = "" + roomID + "";
 
   return this;
 }
@@ -359,6 +341,20 @@ Game.prototype.isStillChoosing = function() {
 
   return flag;
 };
+Game.prototype.updatePlayer = function(playerId, player){
+  var playerIndex = this.findPlayerIndex(playerId);
+
+  if(playerIndex > -1){
+     this.players[playerIndex] = player;    
+  }
+}
+
+Game.prototype.setPlayerContract = function(playerId, contract) {
+  var currentPlayer = this.getPlayer(playerId);
+  currentPlayer.changeContract(contract);
+
+  this.updatePlayer(playerId, currentPlayer);
+};
 
 Game.prototype.changePlayer = function() {
  var currentPlayerIndex = findPlayerIndex(this.currentPlayer.id); 
@@ -366,7 +362,6 @@ Game.prototype.changePlayer = function() {
  var newPlayer = this.players[nextPersonToGet % this.noOfPlayers];
  
  this.currentPlayer = newPlayer;
-
 };
 
 Game.prototype.isPlayerAllowedInRoom = function(id) {
@@ -404,6 +399,32 @@ Game.prototype.addPlayer = function(player) {
   this.noOfPlayers++;
 };
 
+Game.prototype.removePlayer = function(playerId) {
+  var playerIndex = this.findPlayerIndex(playerId);
+  
+  if(playerIndex > -1){
+    this.players.splice(playerIndex, 1);
+    this.noOfPlayers--;
+  }else{
+    return false;
+  }
+  
+  return true;
+};
+
+Game.prototype.contractsAllSet = function() {
+  var flag = true;
+
+  this.players.forEach(function(e){
+    if(!e.choosenContract){
+      flag = false;
+      return;
+    }
+  });
+
+  return flag;
+};
+
 Game.prototype.getPlayer = function(playerId) {
   var playerIndex = this.findPlayerIndex(playerId);
   
@@ -414,13 +435,54 @@ Game.prototype.getPlayer = function(playerId) {
   return null;
 };
 
-Game.prototype.findPlayerIndex = function(id){
+Game.prototype.getPlayerIds = function() {
+  var playerIds = []; 
+  this.players.forEach(function(e){
+    playerIds.push(e.id);
+  });
+
+  return playerIds;
+};
+
+Game.prototype.filterPlayerIds = function(playerIds) {
+  var playerIdsList = this.getPlayerIds();
+  var game = this;
+
+  playerIds.forEach(function(e){
+    game.filterPlayerId(e, playerIdsList);
+  });
+
+  return playerIdsList;
+};
+
+Game.prototype.filterPlayerId = function(playerId, playerIdList) {
+  var index = playerIdList.indexOf(playerId);
+  
+  if(index > -1){
+    playerIdList.splice(index,1);
+    return true;
+  }
+
+  return false;
+};
+
+Game.prototype.everyoneButPlayer = function(playerId) {
+  var playerIndex = this.findPlayerIndex(playerId);
+
+  var everyOneElse = this.players.filter(function(e,i) {
+    return i != playerIndex;
+  });
+
+  return everyOneElse;
+};
+
+Game.prototype.findPlayerIndex = function(playerId){
 
   var foundIndex = -1;
 
-  this.players.forEach(function(e,i,a){
+  this.players.forEach(function(e,i){
     if(e.id == playerId){
-     foundIndex = index;
+     foundIndex = i;
      return;
     }
   });
