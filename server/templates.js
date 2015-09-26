@@ -23,9 +23,7 @@ module.exports = function(app, socket, db){
     req.session.alreadyPlayedContracts.push({contractName: req.body.name, contractId: req.body.contractId});
 
     req.session.currentContract = {contractName: req.body.name, contractId: req.body.contractId};
-    
-    socket.emit("contractDecided");
-    
+    socket.to(req.session.socketId).emit('contractDecided');
     res.sendStatus(200);
   });
 };

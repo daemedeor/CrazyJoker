@@ -18,13 +18,13 @@ var express = require('express')
     , bodyParser = require("body-parser")
     , passportSocketIo = require("passport.socketio")
     , config = require("../config/config")
-    , ioSocket = require("./iolisteners")(app, io);
-
-var RedisStore = new redisStore({
+    , RedisStore = new redisStore({
                                     port: config.session_port,
                                     host: "localhost",
                                     client: client
-                                });
+                                })
+    , ioSocket = require("./iolisteners")(app, io, redis);
+
 
 var sessionService = require('./sessionUpdate');
 var sessionMiddleware = session({
@@ -58,6 +58,7 @@ io.use(function(socket, next) {
                 next(new Error(err.message));
             if (!session)
                 next(new Error("Not authorized"));
+
             handshake.session = session;
             next();
         });

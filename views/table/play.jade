@@ -75,7 +75,6 @@ block headerScripts
   script(src="/js/jquery.fancybox.js")
 
 block footerScripts
-
   script(src='/socket.io/socket.io.js')
   script(src='/js/frontEndLogic.js')
 
@@ -198,7 +197,7 @@ block footerScripts
 
       function contractDecided() {
         App.waiting();
-        IO.socket.emit('contractDecided');
+        IO.socket.emit('updateContract');
       }
 
       function kickout() {
@@ -224,7 +223,7 @@ block footerScripts
       function startNewRound(data){
         App.hideOverlays();
         $.get("/contracts", {}, function(html){
-            $.fancybox(html, { closeBtn: false, modal: true});
+          $.fancybox(html, { closeBtn: false, modal: true});
         });
       }
 
@@ -345,14 +344,25 @@ block footerScripts
             currentIds.push(currentIdOfPlayer);
           }
         });
-        console.log(data);
+        console.log(players);
 
         players.forEach(function(e,i){
-          currentPlayer = $("#player-"+ i, "#table");
-          id = currentPlayer.data("id");
-          if(!id && currentIds.indexOf(id) == -1){
-            currentPlayer.attr('data-id', e);
+          var emptyPlayer = 0;
+          while(emptyPlayer < 3){
+
+            currentPlayer = $("#player-"+ emptyPlayer, "#table");
+            id = currentPlayer.data("id");
+            if(!id){
+              if(currentIds.indexOf(e) == -1){
+                currentPlayer.attr('data-id', e);
+                break;
+              }
+            }
+
+            emptyPlayer++;
           }
+          
+          
         });
       }
     });

@@ -2,7 +2,7 @@ var deck = require("./Deck.js")
     , validation = require("./Validation.js")
     , sessionService = require('./sessionUpdate');
 
-module.exports = function(app, io){
+module.exports = function(app, io, redis){
   var games = {};
 
   app.get('/table', function(req, res) {
@@ -60,8 +60,8 @@ module.exports = function(app, io){
         game = new Game(roomID);
         player = new Player(game.dealNewHand());
       }
-      
-      
+      setSession("alreadyPlayedContracts", []);
+      setSession("socketId", socket.id);
       //add the new player that was created
       game.addPlayer(player);
       socket.join(roomID);
@@ -87,9 +87,9 @@ module.exports = function(app, io){
     });
 
 
-    socket.on('contractDecided', function(data){
+    socket.on('updateContract', function(data){
 
-      var game = getGame(socket.currentRoom);
+      var game = getGame();
       var currentContract = socket.request.session["currentContract"];
 
       if(game){
@@ -97,9 +97,8 @@ module.exports = function(app, io){
         game.setPlayerContract(socket.playerID, currentContract);
         
         var areAllGameContractsSet = game.contractsAllSet();
-
+        console.log("Are all contracts set yet: ", areAllGameContractsSet);
         if(areAllGameContractsSet){
-
           emitToEveryone('startNewRoundLogic', {message: "Game has officially started", dealerId: game.dealer.id});
           game.currentRound++;
         }
@@ -192,7 +191,7 @@ module.exports = function(app, io){
   
       if(game && socket.player){
 
-        if(socket.player.id && game.removePlayer){
+        if(socket.player.id){
           game.removePlayer(socket.player.id);
         }
 
@@ -231,7 +230,7 @@ module.exports = function(app, io){
       
       game.started = true;
       game.setNewDealer();
-      setSession("alreadyPlayedContracts", [], emitToEveryone('startNewRound', {message: "Starting a new game", dealer: game.dealer.id}));
+      emitToEveryone('startNewRound', {message: "Starting a new game", dealer: game.dealer.id});
 
       updateGame(game);
     }
@@ -477,12 +476,11 @@ Game.prototype.removePlayer = function(playerId) {
 };
 
 Game.prototype.contractsAllSet = function() {
-  var flag = true;
+  var flag = false;
 
   this.players.forEach(function(e){
     if(!e.choosenContract){
-      flag = false;
-      return;
+      return flag;
     }
   });
 

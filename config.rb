@@ -22,18 +22,3 @@ line_comments = false
 # preferred_syntax = :sass
 # and then run:
 # sass-convert -R --from scss --to sass sass scss && rm -rf sass && mv scss sass
-
-on_stylesheet_saved do |file|
-    css = File.read(file)
-    map = file + '.map'
-    
-    if File.exists? map
-        result = AutoprefixerRails.process(css,
-                                           from: file,
-                                           to:   file,
-                                           map:  { prev: File.read(map), inline: false },
-                                           browsers: ["last 7 versions"] )
-                                           File.open(file, 'w') { |io| io << result.css }
-                                           File.open(map,  'w') { |io| io << result.map }
-    end
-end

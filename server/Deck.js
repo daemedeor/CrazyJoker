@@ -107,8 +107,6 @@ Deck.prototype.deal = function(num, addAnotherDeck) {
     i++;
   }
 
-  this.deck.length -= i;
-
   return dealt;
 };
 

@@ -4,7 +4,7 @@
 .fancybox-lock .fancybox-overlay, html, body { overflow: hidden !important; }
 
 /* Card information */
-.card { position: relative; float: left; margin-right: 10px; width: 60px; height: 90px; border-radius: 10px; background: #fff; box-shadow: 3px 3px 7px rgba(0, 0, 0, 0.3); }
+.card { position: relative; float: left; margin-right: 10px; width: 60px; height: 90px; border-radius: 10px; background: #fff; -webkit-box-shadow: 3px 3px 7px rgba(0, 0, 0, 0.3); box-shadow: 3px 3px 7px rgba(0, 0, 0, 0.3); }
 .card p { text-align: center; font: 30px/90px Georgia, Times New Roman, serif; margin-bottom: 0; }
 
 [class*="D_"]:before, [class*="D_"]:after { content: "♦"; color: #ff0000; }
@@ -27,7 +27,7 @@
 
 .gu-hide { display: none !important; }
 
-.gu-unselectable { user-select: none !important; }
+.gu-unselectable { -webkit-user-select: none !important; -moz-user-select: none !important; -ms-user-select: none !important; user-select: none !important; }
 
 .gu-transit { opacity: 0.2; filter: alpha(opacity=20); }
 
@@ -43,11 +43,11 @@
 
 #me { position: absolute; bottom: 15px; left: 30vw; }
 
-#player-0 { left: -156px; bottom: 45vh; transform: rotate(90deg); }
+#player-0 { left: -156px; bottom: 45vh; -webkit-transform: rotate(90deg); -ms-transform: rotate(90deg); transform: rotate(90deg); }
 
-#player-1 { left: 24vw; top: 4vh; transform: rotate(180deg); }
+#player-1 { left: 24vw; top: 4vh; -webkit-transform: rotate(180deg); -ms-transform: rotate(180deg); transform: rotate(180deg); }
 
-#player-2 { transform: rotate(270deg); }
+#player-2 { -webkit-transform: rotate(270deg); -ms-transform: rotate(270deg); transform: rotate(270deg); }
 
 /* Player end */
 /* Table Information */
@@ -60,20 +60,24 @@
 
 #await { z-index: 999; font-family: Arial; background-color: rgba(0, 0, 0, 0.85); position: absolute; top: 0; right: 0; left: 0; bottom: 0; color: white; display: none; }
 #await .wrapper { position: relative; }
-#await .fountainTextG { color: #969696; font-size: 55px; text-decoration: none; font-weight: normal; font-style: normal; float: left; animation-name: bounce_fountainTextG; animation-duration: 2.09s; animation-iteration-count: infinite; animation-direction: normal; transform: scale(0.5); }
+#await .fountainTextG { color: #969696; font-size: 55px; text-decoration: none; font-weight: normal; font-style: normal; float: left; -webkit-animation-name: bounce_fountainTextG; animation-name: bounce_fountainTextG; -webkit-animation-duration: 2.09s; animation-duration: 2.09s; -webkit-animation-iteration-count: infinite; animation-iteration-count: infinite; -webkit-animation-direction: normal; animation-direction: normal; -webkit-transform: scale(0.5); -ms-transform: scale(0.5); transform: scale(0.5); }
 #await #fountainTextG { position: relative; top: 35vh; left: 30vw; }
-#await #fountainTextG_1 { animation-delay: 0.75s; }
-#await #fountainTextG_2 { animation-delay: 0.9s; }
-#await #fountainTextG_3 { animation-delay: 1.05s; }
-#await #fountainTextG_4 { animation-delay: 1.2s; }
-#await #fountainTextG_5 { animation-delay: 1.35s; }
-#await #fountainTextG_6 { animation-delay: 1.5s; }
-#await #fountainTextG_7 { animation-delay: 1.64s; }
-#await #fountainTextG_8 { animation-delay: 1.79s; }
-#await #fountainTextG_9 { animation-delay: 1.94s; }
-#await #fountainTextG_10 { animation-delay: 2.09s; }
-@keyframes bounce_fountainTextG { 0% { transform: scale(1); color: #969696; }
-  100% { transform: scale(0.5); color: white; } }
+#await #fountainTextG_1 { -webkit-animation-delay: 0.75s; animation-delay: 0.75s; }
+#await #fountainTextG_2 { -webkit-animation-delay: 0.9s; animation-delay: 0.9s; }
+#await #fountainTextG_3 { -webkit-animation-delay: 1.05s; animation-delay: 1.05s; }
+#await #fountainTextG_4 { -webkit-animation-delay: 1.2s; animation-delay: 1.2s; }
+#await #fountainTextG_5 { -webkit-animation-delay: 1.35s; animation-delay: 1.35s; }
+#await #fountainTextG_6 { -webkit-animation-delay: 1.5s; animation-delay: 1.5s; }
+#await #fountainTextG_7 { -webkit-animation-delay: 1.64s; animation-delay: 1.64s; }
+#await #fountainTextG_8 { -webkit-animation-delay: 1.79s; animation-delay: 1.79s; }
+#await #fountainTextG_9 { -webkit-animation-delay: 1.94s; animation-delay: 1.94s; }
+#await #fountainTextG_10 { -webkit-animation-delay: 2.09s; animation-delay: 2.09s; }
+@-webkit-keyframes bounce_fountainTextG { 0% { -webkit-transform: scale(1); transform: scale(1); color: #969696; }
+  100% { -webkit-transform: scale(0.5); transform: scale(0.5); color: white; } }
+@keyframes bounce_fountainTextG { 0% { -webkit-transform: scale(1); transform: scale(1); color: #969696; }
+  100% { -webkit-transform: scale(0.5); transform: scale(0.5); color: white; } }
+.green { background-color: green; }
+
 .dealer.active::before { content: ''; display: block; width: 100px; height: 100px; border-radius: 50%; margin: 0 auto; background-color: #D0AE2A; }
 
 /* Table informattion end*/

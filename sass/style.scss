@@ -308,6 +308,9 @@
     }
   }
 }
+.green{
+  background-color: green;
+}
 .dealer.active::before{
     content: '';
     display: block;
