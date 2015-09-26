@@ -4,7 +4,7 @@ module.exports = function(sequelize, DataTypes) {
     name: DataTypes.STRING,
     description: DataTypes.STRING,
     game_id: DataTypes.INTEGER,
-    game_name: DataTypes.STRING
+    bName: DataTypes.STRING
   }, {
     underscored: true,
     classMethods: {

@@ -5,7 +5,7 @@ table
       th Add Contract
   tbody
     each contract in contracts
-      tr.contract(data-id="#{contract.id}")
+      tr.contract(data-id="#{contract.id}" data-bname="#{contract.bName}")
         td.name #{contract.name} 
           span(title="#{contract.description}")
             i.fa.fa-info-circle(title="#{contract.description}")
@@ -19,8 +19,8 @@ script.
       $parent = $(this).closest(".contract");  
       var id = $parent.data("id");
       var name = $parent.find(".name")[0].innerText;
-      
-      $.post("/setContract", {name: name, contractId: id}, function(){
+      var bName = $parent.data("bname");
+      $.post("/setContract", {name: name, contractId: id, bName: bName}, function(){
         $.fancybox.close(true);
       });
 

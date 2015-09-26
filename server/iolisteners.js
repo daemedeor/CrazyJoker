@@ -91,7 +91,6 @@ module.exports = function(app, io, redis){
 
       var game = getGame();
       var currentContract = socket.request.session["currentContract"];
-
       if(game){
 
         game.setPlayerContract(socket.playerID, currentContract);
@@ -123,7 +122,7 @@ module.exports = function(app, io, redis){
       var status = game.pullACard(data.pile);
 
       if(status.valid){
-        socket.emit("validMove");
+        socket.emit("validMove", {valid: true});
         updateGame(game);
       }else{
         emitWarning(status.warning);
@@ -136,18 +135,20 @@ module.exports = function(app, io, redis){
       
       if(game){
         var status =  game.placeBack();
+
         if(!status.valid){
           emitWarning(status.warning);
         }
+
+        socket.emit("validMove", {valid: false});
+        updateGame(game);
       }
 
-      updateGame(game);
     });
 
     socket.on("addToHand", function(data){
       
       var game = getGame();
-      
       if(game){
         var status = game.addToHand();
 
@@ -168,7 +169,6 @@ module.exports = function(app, io, redis){
         var status = game.discardACard(data.pile, data.card);
 
         if(status.valid){
-          console.log("heeeyo");
           if(status.playerHand){
             var player = game.currentPlayer;
             game.resetRound();
@@ -176,7 +176,13 @@ module.exports = function(app, io, redis){
             emitToEveryone("RoundWon",{winner: player});
           }else{
             game.changePlayer();
-            emitToEveryone("addCardToDiscardPile", {discardedCard: status.discardedCard, id: status.id, type: status.type});
+
+            if(status.type == "deck"){
+              emitToEveryone("addCardToDiscardPile", {discardedCard: status.cardDiscarded, id: status.id, type: status.type});
+            }else{
+               emitToEveryoneButSelf("addCardToDiscardPile", {discardedCard: status.cardDiscarded, id: status.id, type: status.type});
+            }
+            
             emitToEveryone("changedPlayer", {dealerId: game.currentPlayer.id});
           }
 
@@ -236,6 +242,11 @@ module.exports = function(app, io, redis){
         case "noContract":
           message = "There is no contract existing... don't cheat!!!!!!!";
           break;
+        case "placeback":
+          message = "This is to quell the demons within you, diiiiiie";
+          break;
+        case "invalidMove":
+          message = "This is an invalid, you did something wrong";
         default: 
           message = "Error!!!";
           break;
@@ -284,7 +295,7 @@ module.exports = function(app, io, redis){
     }
 
     function updateGame(game){
-      games["" + socket.currentRoom + ""] = game;
+      games[socket.currentRoom] = game;
     }
   });
 };
@@ -315,7 +326,6 @@ function Game(roomID) {
 
 Game.prototype.addToHand = function() {
   var player = this.currentPlayer;
-
   if(this.validMove){
     var cardToHand = this.cardPulled.pop();
     player.hand.push(cardToHand);
@@ -332,10 +342,11 @@ Game.prototype.addToHand = function() {
 Game.prototype.discardACard = function(pile, card){
 
   if(pile == "deck"){
+    var cardPlayed = this.cardPulled[0];
     this.discardPile.push(this.cardPulled.pop());
     this.cardPulled = null;
 
-    return {valid: true, playerHand: false, cardDiscarded: card, id: this.currentPlayer.id, type: "deck"};
+    return {valid: true, playerHand: false, cardDiscarded: [cardPlayed], id: this.currentPlayer.id, type: "deck"};
   } 
 
   if(pile == "playerHand"){
@@ -351,10 +362,10 @@ Game.prototype.discardACard = function(pile, card){
       this.cardPulled = null;
       var isValid = player.validateHand();
       
-      if(isValid.valid){
-        return {valid: true, playerHand: true, roundFinished: true};
-      }else if(isValid.valid){
-        return {valid: true, playerHand: false, cardDiscarded: card, type: "playerHand", id: this.currentPlayer.id};
+      if(isValid.valid && !isValid.warning){
+        return {valid: true, playerHand: isValid.valid, roundFinished: true};
+      }else if(!isValid.warning){
+        return {valid: true, playerHand: false, cardDiscarded: [card], type: "playerHand", id: this.currentPlayer.id};
       }else{
         return {valid: false, warning: isValid.warning};
       }
@@ -369,7 +380,6 @@ Game.prototype.discardACard = function(pile, card){
 }
 
 Game.prototype.placeBack = function(pile) {
-  
   if(this.lastMove == "discard"){
     this.discardPile.push(this.cardPulled);
   }else if(this.lastMove == "deck"){
@@ -378,14 +388,14 @@ Game.prototype.placeBack = function(pile) {
 
   this.cardPulled = null;
   this.validMove = false;
-
-  return {valid: true};
+  return {valid: true, warning: "placeback"};
 
 };
 
 Game.prototype.pullACard = function(pile) {
   var isAllowed = this.isPlayerAllowedInRoom(this.currentPlayer.id);
   this.validMove = false;
+
   if(pile && isAllowed && !this.cardPulled){
     if(pile == "deck"){
       newCard = this.deck.deal(1, true)[0];
@@ -408,8 +418,9 @@ Game.prototype.pullACard = function(pile) {
     return {valid: true};
   
   }else if(isAllowed && this.cardPulled && pile) {
-    return {valid: false, warning: "cardPlayed"};
+    this.validMove = true;
 
+    return {valid: false, warning: "cardPlayed"};
   }else if(!pile && isAllowed){
     return {valid: false, warning: "noPile"};
 
@@ -451,7 +462,7 @@ Game.prototype.setPlayerContract = function(playerId, contract) {
 };
 
 Game.prototype.changePlayer = function() {
- var currentPlayerIndex = findPlayerIndex(this.currentPlayer.id); 
+ var currentPlayerIndex = this.findPlayerIndex(this.currentPlayer.id); 
  var nextPersonToGet = currentPlayerIndex + 1;
  var newPlayer = this.players[nextPersonToGet % this.noOfPlayers];
  
@@ -621,9 +632,21 @@ Player.prototype.addContract = function(contract) {
 };
 
 Player.prototype.changeContract = function(contract) {
-  this.currentContract = contract;
-  this.choosenContract = true;
-  this.addContract(contract);
+  var indexOf = -1;
+
+  this.contract.forEach(function(e,i){
+    if(e.id == contract.id){
+      indexOf = i;
+      return;
+    };
+  });
+
+  if(indexOf == -1){
+    this.currentContract = contract;
+    this.choosenContract = true;
+    this.addContract(contract);
+  }
+
 };
 
 Player.prototype.discardCard = function(card){

@@ -52,6 +52,8 @@ block content
         label(for="url") Room URL
         div(data-room="#{share}", id="room") #{shareURL}
   
+          
+  
   #await
     .wrapper
       #fountainTextG
@@ -97,11 +99,10 @@ block footerScripts
           IO.socket.on('startNewRoundLogic', App.startNewRoundLogic);
           IO.socket.on('startNewRound', App.startNewRound);
           IO.socket.on('warning', App.warning);
-          IO.socket.on('undoMove', App.undoMove);
           IO.socket.on('addCardToDiscardPile', App.addCardToDiscardPile);
           IO.socket.on('showCard', App.showCard);
           IO.socket.on('validMove', App.validMove);
-          IO.socket.on('changedPlayer', App.setPlayer);
+          IO.socket.on('changedPlayer', App.setCurrentPlayer);
           IO.socket.on('addCardToHand', App.addCardToHand);
         },
         
@@ -148,7 +149,7 @@ block footerScripts
         
         //app logic that governs a round
         addCardToTable: addCardToTable,
-        undoMove: undoMove,
+        dragEnd: undoMove,
         validMove: validMove,
         showCard: showCard,
         addCardToDiscardPile: addCardToDiscardPile,
@@ -178,16 +179,15 @@ block footerScripts
       });
 
       function addCardToHand(data) {
-        $("[data-id='"+data.id).append("<div class='card'></card>");
+        $("[data-id='"+data.id+"'] .hand").append("<div class='card'></card>");
       }
       
       function removeCardFromHand(data) {
-        $("[data-id='"+data.id).remove("<div class='card'></card>");
+        $(".card","[data-id='"+data.id+"']").first().remove();
       }
 
-      function validMove() {
-        App.validMove = true;
-        console.log("validated");
+      function validMove(data) {
+        App.validMove = data.valid;
       }
 
       function addCardToTable(){
@@ -238,42 +238,40 @@ block footerScripts
       }
 
       function drop(el, target, source) {
-        var dropLocation = $(target).data("decktype");
-        var initialLocation = $(source).data("decktype");
-        var currentHandLength = $(".hand","#me").children().length;
+
+        var dropLocation = $(target).data("decktype")
+            , initialLocation = $(source).data("decktype")
+            , currentHandLength = $(".hand","#me").children().length;
+
+        var isDroppedInWrongPlace = (App.pulledFrom == "playerHand" && dropLocation == "deck") || (App.pulledFrom == "deck" && dropLocation == "deck")
+            , isToBeDiscarded = (dropLocation == "discard" && dropLocation != App.pulledFrom) && (currentHandLength == 7 || initialLocation == "deck") 
+            , isValidMove = dropLocation == "playerHand" && App.validMove;
+
         if(App.currentTurn){
-          if(App.pulledFrom == "playerHand" && dropLocation == "deck"){
-                      
-          }else if(dropLocation == "discard" && dropLocation != App.pulledFrom && (currentHandLength == 7 || initialLocation == "deck")){
+
+          if(isDroppedInWrongPlace){
+            App.dragndrop.cancel(true);          
+          }else if(isToBeDiscarded){
 
             var cardToDiscard = $(el).data("card");
-            console.log(el);
-
             var originalPlace = $(source).data("decktype");
+
             IO.socket.emit("discardCard", {pile: originalPlace, card: cardToDiscard});
-            
-
-
             return;            
-          }else if(dropLocation == "playerHand" && App.validMove){
+          }else if(isValidMove){
             IO.socket.emit("addToHand");
             return;
-          }else if(dropLocation != "playerHand"){
-            IO.socket.emit("placeBack");
           }
           
-          App.dragndrop.cancel(true);
-
         }else{
           App.dragndrop.cancel(true);
         }
 
-
       }
       function addCardToDiscardPile(data){
-        var text = data.discardedCard.split("_")[1];
+        var text = data.discardedCard[0].split("_")[1];
         var newText = "<p>"+text+"</p>";
-        App.discardPile.append("<div class'card "+data.discardedCard+"' data-card='"+data.discardedCard+"'>"+newText+"</div>");
+        App.discardPile.append("<div class='card "+data.discardedCard+"' data-card='"+data.discardedCard+"'>"+newText+"</div>");
         if(data.type != "deck"){
           removeCardFromHand(data);
         }
@@ -288,6 +286,7 @@ block footerScripts
         App.pulledFrom = dropLocation;
         App.referencedElement = source;
         App.newCard = el;
+
         if(dropLocation != "playerHand"){
           App.pullACard();
         }
@@ -323,9 +322,10 @@ block footerScripts
         App.loading.hide();
         App.overlay.hide();
       }
-
+  
       function registerDragEvents(dragndrop) {
         dragndrop.on("drag", App.drag);
+        dragndrop.on("dragEnd", App.dragEnd);
         dragndrop.on("drop", App.drop);
       }
 

@@ -10,13 +10,13 @@ var  cardRank =  {
 };
   
 var validation = function(currentHand, player){
-  flag = false;
-
-  var newCardHand = convertHandToCards(currentHand);
-  var nameOfContract = player.currentContract.contractName;
   
+  var flag = false
+      , newCardHand = convertHandToCards(currentHand)
+      , nameOfContract = player.currentContract.backendName
+      , reason;
+
   if(nameOfContract){
-    console.log(nameOfContract);
     switch(nameOfContract.toLowerCase()){
       case "fullfullhouse":
         flag = isFullFullHouseValid(newCardHand);
@@ -30,7 +30,7 @@ var validation = function(currentHand, player){
         flag = isBigFlushValidated(newCardHand);
         break;
 
-      case "facebyeven":
+      case "facedbyevens":
         flag = isFaceByEvenValidated(newCardHand);
         break;
 
@@ -48,8 +48,6 @@ var validation = function(currentHand, player){
   }else{
     reason = "noContract";
   }
-
-  
 
   return {valid: flag, warning: reason};
 }
@@ -86,7 +84,7 @@ function isFullFullHouseValid (hand) {
 
       if(specificFaceToWatch){
         
-        if(specificFaceToWatch == card.rank && counter < 3){
+        if(specificFaceToWatch == card.rank && rankCounter < 3){
           rankCounter++;
         }else{
           isCurrentlyValid = false;
