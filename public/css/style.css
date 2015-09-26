@@ -43,11 +43,11 @@
 
 #me { position: absolute; bottom: 15px; left: 30vw; }
 
-#player-2 { left: -156px; bottom: 45vh; transform: rotate(90deg); }
+#player-0 { left: -156px; bottom: 45vh; transform: rotate(90deg); }
 
-#player-3 { left: 24vw; top: 4vh; transform: rotate(180deg); }
+#player-1 { left: 24vw; top: 4vh; transform: rotate(180deg); }
 
-#player-4 { transform: rotate(270deg); }
+#player-2 { transform: rotate(270deg); }
 
 /* Player end */
 /* Table Information */

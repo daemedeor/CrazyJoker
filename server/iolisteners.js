@@ -37,7 +37,8 @@ module.exports = function(app, io){
           , player
           , roomID = data.room
           , game = getGame(roomID);
-          socket.currentRoom = roomID;
+
+      socket.currentRoom = roomID;
       
       //try to find a game room
       if(game) {
@@ -50,7 +51,7 @@ module.exports = function(app, io){
 
         //now make a new player, deal out a new hand from the deck
         player = new Player(game.dealNewHand());
-      
+
         //let everyone else know that a new player has joined
         emitToEveryoneButSelf('setPlayer', {players: [player.id], message: "A new player has joined"});
 
@@ -87,138 +88,102 @@ module.exports = function(app, io){
 
 
     socket.on('contractDecided', function(data){
-      console.log("choosing contract");
 
       var game = getGame(socket.currentRoom);
       var currentContract = socket.request.session["currentContract"];
-      
-      game.setPlayerContract(socket.player.id, currentContract);
-      
-      var areAllGameContractsSet = game.contractsAllSet();
-      console.log(areAllGameContractsSet);
 
-      if(areAllGameContractsSet){
-        emitToEveryone('startNewRoundLogic', {message: "Game has officially started"});
-        game.currentRound++;
+      if(game){
+
+        game.setPlayerContract(socket.playerID, currentContract);
+        
+        var areAllGameContractsSet = game.contractsAllSet();
+
+        if(areAllGameContractsSet){
+
+          emitToEveryone('startNewRoundLogic', {message: "Game has officially started", dealerId: game.dealer.id});
+          game.currentRound++;
+        }
+
+        updateGame(game);
       }
-
-      updateGame(socket.currentRoom, game);
     });
 
     socket.on('newRound', function(){
-      if(!games[socket.currentRound].finished){
-        socket.broadcast.to(socket.currentRoom).emit('renderContract');
-      }else{
-        socket.broadcast.to(socket.currentRoom).emit('finished');
-      }
+      var game = getGame();
 
+      if(!game.finished){
+        emitToEveryone('renderContract');
+      }else{
+        emitToEveryone('finished', {gameStats: game});
+      }
     });
 
     socket.on('pullACard', function(data){
       var newCard;
+      var game = getGame();
+      var status = game.pullACard(data.pile);
 
-      var currentRoom = games[data.room];
-
-      if(currentRoom && currentRoom.deck && isPlayerInRoom(data.room, data.playerId)){
-        if(data.pile && data.pile == "deck" && currentRoom.deckLength > 0 && !currentRoom.cardPulled){
-          newCard = currentRoom.deck.deal(1);
-        }else if(data.pile == "discard"){
-          if(currentRoom.discardPile > 0){
-            newCard = currentRoom.discardPile[currentRoom.discardPile.length - 1];
-          }else{
-            socket.emit("undoMove");
-            socket.emit("warning", {message: "There are no cards in the discard pile", stopDragging: true});
-            return;
-          }
-        }else{
-          socket.emit("undoMove");
-          socket.emit("warning", {message: "Please do an appropriate action"});
-          return;
-        }
-        games[data.room].cardPulled = newCard;
-        socket.emit("valid");
-      }else if(!currentRoom.cardPulled){
-        socket.emit("warning", {message: "Wrong room!"});
-        return;
+      if(status.valid){
+        socket.emit("validMove");
+        updateGame(game);
+      }else{
+        emitWarning(status.warning);
       }
-
+      
     });
       
     socket.on("placeBack", function(data){
-      var currentRoom = games[data.room];
-      if(currentRoom && data.deckType == "discard"){
-        currentRoom.cardPulled = null;
-      }else if(data.deckType == "deck"){
-        currentRoom.deck.addToDeck([currentRoom.cardPulled]);
+      var game = getGame();
+      
+      if(game){
+        var status =  game.placeBack();
+        if(!status.valid){
+          emitWarning(status.warning);
+        }
       }
+
+      updateGame(game);
     });
 
     socket.on("addToHand", function(data){
       
-      if(!currentRoom.cardPulled){
-        return;
-      }
-    
-      var currentRoom = games[socket.currentRoom];
-      var currentPlayer = FindCurrentPlayerIndex(players, playerID);
-
-      if(currentPlayer != -1){
-
-        if(data.deckType == "deck"){
-          currentRoom.deckLength--;
-        }else if(data.deckType == "discard"){
-          currentRoom.discardPile.shift();
-        }
-        var newCard = currentRoom.cardPulled.pop();
-    
-        el.hand.push(newCard);
-        games[socket.currentRoom].currentPlayerHand = el.hand;
-        socket.emit("showCard", {newCard: newCard});
-  
-      }
-       
-
-    });
+      var game = getGame();
       
+      if(game){
+        var status = game.addToHand();
+
+        if(status.valid){
+          socket.emit("showCard", {newCard: status.newCard});
+          updateGame(game);
+        }else{
+          emitWarning(status.warning);
+        }
+      }
+    });
+    
     socket.on("discardCard", function(data){
-      var foundIndex;
-      var currentRoom = games[socket.currentRoom];
-      var currentPlayer = FindCurrentPlayerIndex(players, playerID);
+      var game = getGame();
+      
+      if(game){
+        var status = game.discardACard(data.pile, card);
 
-      if(currentPlayer != -1){
+        if(status.valid){
 
-          if(data.deckType == "deck"){
-            currentRoom.deckLength--;
-          }else if(data.deckType == "discard"){
-            currentRoom.discardPile.shift();
+          if(status.playerHand){
+            var player = game.currentPlayer;
+            game.resetRound();
+            game.setNewDealer();
+            emitToEveryone("RoundWon",{winner: player});
+          }else{
+            game.changePlayer();
+            emitToEveryone("addCardToDiscardPile", {discardedCard: status.discardedCard});
+            emitToEveryone("changedPlayer", {dealerId: game.currentPlayer.id});
           }
-          
-          var handIndex = el.hand.indexOf(data.card);
 
-          if(handIndex > -1){
-            el.hand.splice(handIndex,1);
-            currentRoom.cardPulled = null;
-            games[socket.currentRoom].currentPlayerHand = el.hand;
-            var isValid = validateHand(el.hand, el);
-            socket.emit("validate", {isValid: isValid});
-          } 
+          updateGame(game);
+        }
       }
 
-    });
-
-    socket.on("changeTurn", function(data){
-      var game = getGame(socket.currentRoom);
-      game.changePlayer();
-
-      socket.emit("turnChanged", { nextPlayerId: game.currentPlayer.id});
-
-      updateGame(socket.currentRoom, game);   
-    });
-
-    socket.on("validate", function(){
-      var game = getGame(socket.currentRoom);
-      var isValid = game.currentPlayer.validateHand(game.currentPlayerHand, game.currentPlayer);
-      socket.emit("validate", {isValid: isValid}); 
     });
   
     socket.on('disconnect', function(data) {
@@ -227,7 +192,7 @@ module.exports = function(app, io){
   
       if(game && socket.player){
 
-        if(socket.player.id){
+        if(socket.player.id && game.removePlayer){
           game.removePlayer(socket.player.id);
         }
 
@@ -241,48 +206,45 @@ module.exports = function(app, io){
       }
     });
 
+    function emitWarning(warning){
+      switch(warning){
+        case "cardPlayed": socket.emit("warning", {message: "There's already a card played!"});
+          break;
+        case "noPile": socket.emit("warning", {message: "Pile not recieved"});
+          break;
+        case "inAppropriateAction": socket.emit("warning", {message: "Please do an appropriate action"});
+          socket.emit("undoMove");
+          break;
+        case "discardPileEmpty":
+          socket.emit("warning", {message: "There are no cards in the discard pile", stopDragging: true});
+          break;
+        case "playerCardFailed":
+          socket.emit("warning", {message: "The player has not been able to send a card"});
+          break;
+        default: socket.emit("warning", {message: "Error!!!"});
+      }
+    }
+
+
     function startGame(){
       var game = getGame(socket.currentRoom);
       
       game.started = true;
       game.setNewDealer();
-      setSession("alreadyPlayedContracts", [], emitToEveryone('startGame', {message: "Starting a new game", dealer: game.dealer.id}));
+      setSession("alreadyPlayedContracts", [], emitToEveryone('startNewRound', {message: "Starting a new game", dealer: game.dealer.id}));
 
       updateGame(game);
     }
-
-    function updateHand(data){
-      if(data.discardedCard){
-        var placeInHand = games[data.room].currentPlayerHand.indexOf(data.discardedCard);
-        var discardPile = (placeInHand != -1) ? games[data.room].currentPlayerHand.splice(placeInHand, 1) : null;
-        if(discardPile){
-          games[data.room].discardPile.push(discardPile);
-        }else{
-          games[data.room].discardPile.push(games[data.room].cardPulled);
-          games[data.room].cardPulled = null;
-        }
-        
-        io.to(data.room).emit("cardDiscarded", {card: discardedCard});
-      }
-
-      if(data.addedCard && games[data.room].cardPulled){
-        games[data.room].currentPlayerHand.push(games[data.room].cardPulled);
-        socket.emit("updateHand", {card: games[data.room].cardPulled})
-        
-        var isValid = validateHand(games[data.room].currentPlayerHand, games[data.room].currentPlayer);
-        socket.emit("validate", {isValid: isValid}); 
-      }
-    }
     
     function setSession(property, value, cb) {
-        sessionService.setSessionProperty(socket.request.session, property, value, function(err, data){
-          if(err){
-            cb(err);
-            return;
-          }
-          if(cb)
-            cb(data);
-        });
+      sessionService.setSessionProperty(socket.request.session, property, value, function(err, data){
+        if(err){
+          cb(err);
+          return;
+        }
+        if(cb)
+          cb(data);
+      });
     }
 
     function emitToEveryone(action, data){
@@ -293,8 +255,13 @@ module.exports = function(app, io){
       socket.broadcast.to(socket.currentRoom).emit(action, data);
     }
 
-    function getGame(id){
-      return games[id];
+    function getGame(roomId){
+      var roomNum = (!roomId) ? socket.currentRoom : roomId;
+      if(roomNum in games){
+        return games[roomNum];
+      }
+
+      return false;
     }
 
     function updateGame(game){
@@ -315,15 +282,108 @@ function Game(roomID) {
   this.deck = new deck(),
   this.cardPulled = null;
   this.discardPile = [];
-  
+
   //round states & room information
   this.currentRound = 0;
   this.finished =  false;
   this.started = false;
   this.roomID = "" + roomID + "";
+  this.validMove = false;
+  this.lastMove = null;
 
   return this;
 }
+
+Game.prototype.addToHand = function() {
+  var player = this.currentPlayer;
+
+  if(this.validMove){
+    player.hand.push(this.cardPulled);
+    this.updatePlayer(player);
+
+    this.validMove = false;
+    
+    return {valid: true, newCard: this.cardPulled};
+  }else{
+    return {valid: false, warning: "invalidMove"};
+  }
+};
+
+Game.prototype.discardACard = function(pile, card){
+  
+  if(pile == "deck"){
+    this.discardPile.push(this.cardPulled);
+  }else if(pile == "playerHand"){
+    this.discardPile.push(card);
+    var player = this.currentPlayer;
+    var isDiscarded = player.discardCard(card);
+    
+    if(isDiscarded){
+      this.updatePlayer(player);
+      this.currentPlayerHand = player.hand;
+      this.cardPulled = null;
+      var isValid = player.validateHand();
+      
+      if(isValid){
+        return {valid: true, playerHand: true, roundFinished: true};
+      }else{
+        return {valid: true, playerHand: false, cardDiscarded: card};
+      }
+    }else {
+      return {valid: false, warning: "playerCardFailed"};
+    }
+  }
+
+}
+
+Game.prototype.placeBack = function(pile) {
+  
+  if(this.lastMove == "discard"){
+    this.discardPile.push(this.cardPulled);
+  }else if(this.lastMove == "deck"){
+    this.deck.addCardsToDeck([this.cardPulled]);
+  }
+
+  this.cardPulled = null;
+  this.validMove = false;
+
+  return {valid: true};
+
+};
+
+Game.prototype.pullACard = function(pile) {
+  var isAllowed = this.isPlayerAllowedInRoom(this.currentPlayer.id);
+  this.validMove = false;
+  if(pile && isAllowed && !this.cardPulled){
+    if(pile == "deck"){
+      newCard = this.deck.deal(1, true);
+    }else if(pile == "discard"){
+
+      if(this.discardPile.length > 0){
+        newCard = this.discardPile.pop();
+      }else{
+        return {valid: false, warning: "discardPileEmpty"};
+      }
+
+    }else{
+      return {valid: false, warning: "inAppropriateAction"};
+    }
+
+    this.lastMove = pile;
+    this.cardPulled = newCard;
+    this.validMove = true;
+    return {valid: true, warning: null};
+  
+  }else if(isAllowed && this.cardPulled && pile) {
+    return {valid: false, warning: "cardPlayed"};
+
+  }else if(!pile && isAllowed){
+    return {valid: false, warning: "noPile"};
+
+  }else {
+    return {valid: false, warning: "notAllowed"};
+  }
+};
 
 Game.prototype.resetDeck = function() {
   this.deck = new deck();
@@ -341,19 +401,20 @@ Game.prototype.isStillChoosing = function() {
 
   return flag;
 };
-Game.prototype.updatePlayer = function(playerId, player){
-  var playerIndex = this.findPlayerIndex(playerId);
+
+Game.prototype.updatePlayer = function(player){
+  var playerIndex = this.findPlayerIndex(player.id);
 
   if(playerIndex > -1){
-     this.players[playerIndex] = player;    
+    this.players[playerIndex] = player;    
   }
-}
+};
 
 Game.prototype.setPlayerContract = function(playerId, contract) {
   var currentPlayer = this.getPlayer(playerId);
   currentPlayer.changeContract(contract);
 
-  this.updatePlayer(playerId, currentPlayer);
+  this.updatePlayer(currentPlayer);
 };
 
 Game.prototype.changePlayer = function() {
@@ -362,12 +423,13 @@ Game.prototype.changePlayer = function() {
  var newPlayer = this.players[nextPersonToGet % this.noOfPlayers];
  
  this.currentPlayer = newPlayer;
+ this.currentPlayerHand = newPlayer.hand;
 };
 
 Game.prototype.isPlayerAllowedInRoom = function(id) {
   var id = this.findPlayerIndex(id);
-  
-  if(id = -1){
+
+  if(id == -1){
     return false;
   }
 
@@ -386,12 +448,14 @@ Game.prototype.dealNewHand = function() {
   return newHand;
 };
 
-Game.prototype.setNewDealer = function(io) {
+Game.prototype.setNewDealer = function() {
   var length = this.players.length;
   var randomPlayerIndex = Math.floor(Math.random() * length);
 
   var newDealer = this.players[randomPlayerIndex];
   this.dealer = newDealer;
+  this.currentPlayer = newDealer;
+  this.currentPlayerHand = newDealer.hand;
 };
 
 Game.prototype.addPlayer = function(player) {
@@ -422,6 +486,7 @@ Game.prototype.contractsAllSet = function() {
     }
   });
 
+  this.setNewDealer();
   return flag;
 };
 
@@ -524,6 +589,16 @@ Player.prototype.changeContract = function(contract) {
   this.choosenContract = true;
   this.addContract(contract);
 };
+
+Player.prototype.discardCard = function(card){
+  var indexOfDiscardedCard = this.hand.indexOf(card);
+  if(indexOfDiscardedCard > -1){
+    this.hand.splice(indexOfDiscardedCard, 1);
+    return true;
+  }
+
+  return false;
+}
 
 function generateID(length) {
   var haystack = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';

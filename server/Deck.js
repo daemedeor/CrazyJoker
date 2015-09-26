@@ -92,7 +92,7 @@ Deck.prototype.deal = function(num, addAnotherDeck) {
   var dealt = [];
 
   //check if the deck is empty 
-  if(this.deck.length === 0){
+  if(this.deck.length === 0 && this.deck.length > num){
     
     if(!addAnotherDeck){
       return null;
@@ -106,6 +106,8 @@ Deck.prototype.deal = function(num, addAnotherDeck) {
     dealt.push(this.deck.shift());
     i++;
   }
+
+  this.deck.length -= i;
 
   return dealt;
 };
