@@ -12,27 +12,33 @@ models.sequelize
     contractsData.push(
       {
         name: "Full Full House",
-        description: "The hand must consist of four cards of the same rank (no facecards) and three of the same face card."
+        description: "The hand must consist of four cards of the same rank (no facecards) and three of the same face card.",
+        game_name: "fullfullhouse"
       },
       {
         name: "Fixed Straight",
-        description: "The hand must consist of a Queen and six other cards, that are in order like a straight."
+        description: "The hand must consist of a Queen and six other cards, that are in order like a straight.",
+        game_name: "fixedStraight"
       },
       {
         name: "The Big Flush",
-        description: "The hand must consist of seven cards all of the same suit."
+        description: "The hand must consist of seven cards all of the same suit.",
+        game_name: "bigFlush"
       },
       {
         name: "Faced by Evens",
-        description: "The hand must consist of four different face cards and three of the same cards that are even. For example: K, Q, J, A and three 2s or three 4s, 6s, etc."
+        description: "The hand must consist of four different face cards and three of the same cards that are even. For example: K, Q, J, A and three 2s or three 4s, 6s, etc.",
+        game_name: "facedByEvens"
       },
       {
         name: "Odd Man Out",
-        description: "This hand must consist of six odd numbers, four of those must be different card numbers and One King or Jack. For example 3,3,5,7,7,9,K."
+        description: "This hand must consist of six odd numbers, four of those must be different card numbers and One King or Jack. For example 3,3,5,7,7,9,K.",
+        game_name: "oddManOut"
       },
       {
         name: "Sum of High",
-        description: "The sum of the lowest five cards equal the sum of the two highest cards."
+        description: "The sum of the lowest five cards equal the sum of the two highest cards.",
+        game_name: "sumofhigh"
       }
     );
  

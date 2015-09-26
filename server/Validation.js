@@ -13,9 +13,11 @@ var validation = function(currentHand, player){
   flag = false;
 
   var newCardHand = convertHandToCards(currentHand);
-
-  if(player.currentContract){
-    switch(player.currentContract.toLowerCase()){
+  var nameOfContract = player.currentContract.contractName;
+  
+  if(nameOfContract){
+    console.log(nameOfContract);
+    switch(nameOfContract.toLowerCase()){
       case "fullfullhouse":
         flag = isFullFullHouseValid(newCardHand);
         break;
@@ -39,12 +41,17 @@ var validation = function(currentHand, player){
       case "oddmanout":
         flag = isOddManOutValidated(newCardHand);
         break;
+      default:
+        reason = "nonExistentContract";
     }
+
+  }else{
+    reason = "noContract";
   }
 
   
 
-  return flag;
+  return {valid: flag, warning: reason};
 }
 
 

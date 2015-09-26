@@ -3,7 +3,8 @@ module.exports = function(sequelize, DataTypes) {
   var Contracts = sequelize.define('Contracts', {
     name: DataTypes.STRING,
     description: DataTypes.STRING,
-    game_id: DataTypes.INTEGER
+    game_id: DataTypes.INTEGER,
+    game_name: DataTypes.STRING
   }, {
     underscored: true,
     classMethods: {

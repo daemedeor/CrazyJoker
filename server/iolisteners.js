@@ -97,8 +97,8 @@ module.exports = function(app, io, redis){
         game.setPlayerContract(socket.playerID, currentContract);
         
         var areAllGameContractsSet = game.contractsAllSet();
-        console.log("Are all contracts set yet: ", areAllGameContractsSet);
         if(areAllGameContractsSet){
+          var isDealer = socket.player.id == game.dealer.id;
           emitToEveryone('startNewRoundLogic', {message: "Game has officially started", dealerId: game.dealer.id});
           game.currentRound++;
         }
@@ -153,6 +153,7 @@ module.exports = function(app, io, redis){
 
         if(status.valid){
           socket.emit("showCard", {newCard: status.newCard});
+          emitToEveryoneButSelf("addCardToHand", {id: status.id});
           updateGame(game);
         }else{
           emitWarning(status.warning);
@@ -162,12 +163,12 @@ module.exports = function(app, io, redis){
     
     socket.on("discardCard", function(data){
       var game = getGame();
-      
+
       if(game){
-        var status = game.discardACard(data.pile, card);
+        var status = game.discardACard(data.pile, data.card);
 
         if(status.valid){
-
+          console.log("heeeyo");
           if(status.playerHand){
             var player = game.currentPlayer;
             game.resetRound();
@@ -175,11 +176,13 @@ module.exports = function(app, io, redis){
             emitToEveryone("RoundWon",{winner: player});
           }else{
             game.changePlayer();
-            emitToEveryone("addCardToDiscardPile", {discardedCard: status.discardedCard});
+            emitToEveryone("addCardToDiscardPile", {discardedCard: status.discardedCard, id: status.id, type: status.type});
             emitToEveryone("changedPlayer", {dealerId: game.currentPlayer.id});
           }
 
           updateGame(game);
+        }else{
+          emitWarning(status.warning);
         }
       }
 
@@ -206,22 +209,39 @@ module.exports = function(app, io, redis){
     });
 
     function emitWarning(warning){
+      var message, toDiscard = false;
+
       switch(warning){
-        case "cardPlayed": socket.emit("warning", {message: "There's already a card played!"});
+        case "cardPlayed":
+          message =  "There's already a card played!";
           break;
-        case "noPile": socket.emit("warning", {message: "Pile not recieved"});
+        case "noPile": 
+          message = "Pile not recieved";
           break;
-        case "inAppropriateAction": socket.emit("warning", {message: "Please do an appropriate action"});
-          socket.emit("undoMove");
+        case "inAppropriateAction": 
+          message = "Please do an appropriate action";
           break;
         case "discardPileEmpty":
-          socket.emit("warning", {message: "There are no cards in the discard pile", stopDragging: true});
+          message = "There are no cards in the discard pile";
           break;
         case "playerCardFailed":
-          socket.emit("warning", {message: "The player has not been able to send a card"});
+          message = "The player has not been able to send a card";
           break;
-        default: socket.emit("warning", {message: "Error!!!"});
+        case "wrongCard":
+          message = "Something is wrong with the card you're sending back";
+          break;
+        case "nonExistentContract":
+          message = "Contract doesn't exist in the game... don't cheat";
+          break;
+        case "noContract":
+          message = "There is no contract existing... don't cheat!!!!!!!";
+          break;
+        default: 
+          message = "Error!!!";
+          break;
       }
+
+      socket.emit("warning", {message: message});
     }
 
 
@@ -297,23 +317,31 @@ Game.prototype.addToHand = function() {
   var player = this.currentPlayer;
 
   if(this.validMove){
-    player.hand.push(this.cardPulled);
+    var cardToHand = this.cardPulled.pop();
+    player.hand.push(cardToHand);
     this.updatePlayer(player);
 
     this.validMove = false;
     
-    return {valid: true, newCard: this.cardPulled};
+    return {valid: true, newCard: [cardToHand], id: player.id};
   }else{
     return {valid: false, warning: "invalidMove"};
   }
 };
 
 Game.prototype.discardACard = function(pile, card){
-  
+
   if(pile == "deck"){
-    this.discardPile.push(this.cardPulled);
-  }else if(pile == "playerHand"){
+    this.discardPile.push(this.cardPulled.pop());
+    this.cardPulled = null;
+
+    return {valid: true, playerHand: false, cardDiscarded: card, id: this.currentPlayer.id, type: "deck"};
+  } 
+
+  if(pile == "playerHand"){
+
     this.discardPile.push(card);
+
     var player = this.currentPlayer;
     var isDiscarded = player.discardCard(card);
     
@@ -323,14 +351,19 @@ Game.prototype.discardACard = function(pile, card){
       this.cardPulled = null;
       var isValid = player.validateHand();
       
-      if(isValid){
+      if(isValid.valid){
         return {valid: true, playerHand: true, roundFinished: true};
+      }else if(isValid.valid){
+        return {valid: true, playerHand: false, cardDiscarded: card, type: "playerHand", id: this.currentPlayer.id};
       }else{
-        return {valid: true, playerHand: false, cardDiscarded: card};
+        return {valid: false, warning: isValid.warning};
       }
-    }else {
-      return {valid: false, warning: "playerCardFailed"};
+
+      return {valid: false, warning: "wrongCard"};
     }
+    
+    return {valid: false, warning: "playerCardFailed"};
+    
   }
 
 }
@@ -355,7 +388,7 @@ Game.prototype.pullACard = function(pile) {
   this.validMove = false;
   if(pile && isAllowed && !this.cardPulled){
     if(pile == "deck"){
-      newCard = this.deck.deal(1, true);
+      newCard = this.deck.deal(1, true)[0];
     }else if(pile == "discard"){
 
       if(this.discardPile.length > 0){
@@ -369,9 +402,10 @@ Game.prototype.pullACard = function(pile) {
     }
 
     this.lastMove = pile;
-    this.cardPulled = newCard;
+    this.cardPulled = (!Array.isArray(newCard)) ? [newCard] : newCard;
     this.validMove = true;
-    return {valid: true, warning: null};
+
+    return {valid: true};
   
   }else if(isAllowed && this.cardPulled && pile) {
     return {valid: false, warning: "cardPlayed"};
@@ -476,15 +510,19 @@ Game.prototype.removePlayer = function(playerId) {
 };
 
 Game.prototype.contractsAllSet = function() {
-  var flag = false;
+  var flag = true;
 
   this.players.forEach(function(e){
     if(!e.choosenContract){
-      return flag;
+      flag = false;
+      return;
     }
   });
 
-  this.setNewDealer();
+  if(flag){
+    this.setNewDealer();
+  }
+
   return flag;
 };
 
@@ -590,6 +628,7 @@ Player.prototype.changeContract = function(contract) {
 
 Player.prototype.discardCard = function(card){
   var indexOfDiscardedCard = this.hand.indexOf(card);
+
   if(indexOfDiscardedCard > -1){
     this.hand.splice(indexOfDiscardedCard, 1);
     return true;

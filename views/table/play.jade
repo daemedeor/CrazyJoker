@@ -102,6 +102,7 @@ block footerScripts
           IO.socket.on('showCard', App.showCard);
           IO.socket.on('validMove', App.validMove);
           IO.socket.on('changedPlayer', App.setPlayer);
+          IO.socket.on('addCardToHand', App.addCardToHand);
         },
         
         kickout: kickout,
@@ -126,6 +127,7 @@ block footerScripts
         fromHand: '',
         referencedElement: '',
         dragndrop: null,
+        currentTurn: false,
 
         //functions registered to the app
         registerDragEvents: registerDragEvents,
@@ -134,7 +136,6 @@ block footerScripts
         pullCard: pullCard,
         drag: drag,
         drop: drop,
-        stopDragging: stopDragging,
         hideOverlays: hideOverlays,
         handSetup: handSetup,
         setPlayer: setPlayer,
@@ -151,6 +152,7 @@ block footerScripts
         validMove: validMove,
         showCard: showCard,
         addCardToDiscardPile: addCardToDiscardPile,
+        addCardToHand: addCardToHand,
 
         //functions that should remain defined on the table
         init: function() {
@@ -175,6 +177,14 @@ block footerScripts
         IO.socket.emit("startGame");
       });
 
+      function addCardToHand(data) {
+        $("[data-id='"+data.id).append("<div class='card'></card>");
+      }
+      
+      function removeCardFromHand(data) {
+        $("[data-id='"+data.id).remove("<div class='card'></card>");
+      }
+
       function validMove() {
         App.validMove = true;
         console.log("validated");
@@ -187,7 +197,13 @@ block footerScripts
 
       function startNewRoundLogic(data){
         App.hideOverlays();
-        App.addCardToTable();
+        App.currentTurn = false;
+
+        if(data.dealerId == App.playerId){
+          App.addCardToTable();    
+          App.currentTurn = true;  
+        }
+
         setCurrentPlayer(data.dealerId);
       }
      
@@ -209,17 +225,11 @@ block footerScripts
       }
 
       //App functions 
-      function stopDragging() {
-        App.dragndrop.end();
-      }
-      
+
       function warning(data){
         console.warn(data.message);
-        
-        if(data.stopDragging){
-          App.stopDragging();
-        }
       }
+
       function startNewRound(data){
         App.hideOverlays();
         $.get("/contracts", {}, function(html){
@@ -229,29 +239,44 @@ block footerScripts
 
       function drop(el, target, source) {
         var dropLocation = $(target).data("decktype");
+        var initialLocation = $(source).data("decktype");
+        var currentHandLength = $(".hand","#me").children().length;
+        if(App.currentTurn){
+          if(App.pulledFrom == "playerHand" && dropLocation == "deck"){
+                      
+          }else if(dropLocation == "discard" && dropLocation != App.pulledFrom && (currentHandLength == 7 || initialLocation == "deck")){
 
-        if(App.pulledFrom == "playerHand" && dropLocation == "deck"){
+            var cardToDiscard = $(el).data("card");
+            console.log(el);
+
+            var originalPlace = $(source).data("decktype");
+            IO.socket.emit("discardCard", {pile: originalPlace, card: cardToDiscard});
+            
+
+
+            return;            
+          }else if(dropLocation == "playerHand" && App.validMove){
+            IO.socket.emit("addToHand");
+            return;
+          }else if(dropLocation != "playerHand"){
+            IO.socket.emit("placeBack");
+          }
+          
           App.dragndrop.cancel(true);
-          return;            
-        }else if(dropLocation == "discard" && dropLocation != App.pulledFrom && App.myHand.length >= 7){
 
-          var cardToDiscard = $(el).data("card");
-          var originalPlace = $(source).data("decktype");
-          IO.socket.emit("discardCard", {pile: originalPlace, card: cardToDiscard});
-          $(el).remove();
-
-          return;            
-        }else if(dropLocation == "playerHand" && App.validMove){
-          IO.socket.emit("addToHand");
-        }else if(dropLocation != "playerHand"){
-          IO.socket.emit("placeBack");
+        }else{
+          App.dragndrop.cancel(true);
         }
+
 
       }
       function addCardToDiscardPile(data){
         var text = data.discardedCard.split("_")[1];
         var newText = "<p>"+text+"</p>";
-        App.discardPile.append("<div class'card "+data.discardedCard+"'>"+newText+"</div>")
+        App.discardPile.append("<div class'card "+data.discardedCard+"' data-card='"+data.discardedCard+"'>"+newText+"</div>");
+        if(data.type != "deck"){
+          removeCardFromHand(data);
+        }
       }
 
       function undoMove() {
@@ -263,13 +288,15 @@ block footerScripts
         App.pulledFrom = dropLocation;
         App.referencedElement = source;
         App.newCard = el;
-
-        App.pullACard();
+        if(dropLocation != "playerHand"){
+          App.pullACard();
+        }
       }
       
       function showCard(data){ 
           var text = data.newCard[0].split("_")[1];
           $(App.newCard).addClass(data.newCard[0]);
+          $(App.newCard).attr("data-card", data.newCard[0]);
           $(App.newCard).append("<p>"+text+"</p>");
       }
 
@@ -283,7 +310,7 @@ block footerScripts
       
       function setCurrentPlayer(id){
         id = (id.dealerId) ? id.dealerId : id;
-   
+
         $(".dealer").removeClass("active");
         $(".dealer","[data-id="+id+"]").addClass("active");
       }
@@ -306,10 +333,10 @@ block footerScripts
         var text, newCard;
         App.myHand.empty();
         App.me.attr("data-id", data.id);
-
+        App.playerId = data.id;
         data.hand.forEach(function(e,i,a){
           text = e.split("_")[1];
-          newCard = "<div class='card "+ e +"'><p>"+text+"</p></div>"
+          newCard = "<div class='card "+ e +"' data-card='"+e+"'><p>"+text+"</p></div>"
           App.myHand.append(newCard);
         });
 
@@ -344,8 +371,7 @@ block footerScripts
             currentIds.push(currentIdOfPlayer);
           }
         });
-        console.log(players);
-
+        
         players.forEach(function(e,i){
           var emptyPlayer = 0;
           while(emptyPlayer < 3){
