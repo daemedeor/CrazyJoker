@@ -199,7 +199,7 @@ td, th { padding: 0; }
 /* Table Information */
 #middle-of-table { left: 40vw; top: 35vh; position: absolute; }
 
-#await { z-index: 999; font-family: Arial; background-color: rgba(0, 0, 0, 0.85); position: absolute; top: 0; right: 0; left: 0; bottom: 0; color: white; display: none; }
+#await { z-index: 999; font-family: Arial; background-color: rgba(0, 0, 0, 0.83); position: absolute; top: 0; right: 0; left: 0; bottom: 0; color: white; display: none; }
 #await .wrapper { position: relative; }
 #await .fountainTextG { color: #969696; font-size: 55px; text-decoration: none; font-weight: normal; font-style: normal; float: left; -webkit-animation-name: bounce_fountainTextG; animation-name: bounce_fountainTextG; -webkit-animation-duration: 2.09s; animation-duration: 2.09s; -webkit-animation-iteration-count: infinite; animation-iteration-count: infinite; -webkit-animation-direction: normal; animation-direction: normal; -webkit-transform: scale(0.5); -ms-transform: scale(0.5); transform: scale(0.5); }
 #await #fountainTextG { position: relative; top: 35vh; left: 30vw; }

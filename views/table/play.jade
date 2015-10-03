@@ -60,7 +60,7 @@ block content
             span.input.input--ruri
               input#input-26.input__field.input__field--ruri(type='text',name="room")
               label.input__label.input__label--ruri(for='input-26')
-                span.input__label-content.input__label-content--ruri Room ID 
+                span.input__label-content.input__label-content--ruri Room ID
 
   #await
     .wrapper
@@ -123,7 +123,7 @@ block footerScripts
         
         //elements of the game
         draggableElements: ["#me .hand", "#deck", "#discard"],
-        currentDeckObject: $("#deck"),
+        currentDeckPile: $("#deck"),
         discardPile: $("#discard"),
         table: $("#table"),
         myHand: $(".hand", "#me"),
@@ -137,7 +137,7 @@ block footerScripts
         referencedElement: '',
         dragndrop: null,
         currentTurn: false,
-
+        
         //functions registered to the app
         registerDragEvents: registerDragEvents,
         waiting: waiting,
@@ -163,6 +163,8 @@ block footerScripts
         addCardToDiscardPile: addCardToDiscardPile,
         addCardToHand: addCardToHand,
         switchPlayer: switchPlayer,
+        appValidMove: false,
+
         //functions that should remain defined on the table
         init: function() {
 
@@ -235,12 +237,12 @@ block footerScripts
       }
 
       function validMove(data) {
-        App.validMove = data.valid;
+        App.appValidMove = data.valid;
       }
 
       function addCardToTable(){
-        App.currentDeckObject.empty();
-        App.currentDeckObject.append("<div class='card'></div>");
+        App.currentDeckPile.empty();
+        App.currentDeckPile.append("<div class='card'></div>");
       }
 
       function startNewRoundLogic(data){
@@ -257,6 +259,7 @@ block footerScripts
      
       function startNewRound() {
         App.discardPile.empty();
+        App.currentDeckPile.empty();
         IO.socket.emit('newRound');
       }
 
@@ -294,8 +297,8 @@ block footerScripts
 
         var isDroppedInWrongPlace = (App.pulledFrom == "playerHand" && dropLocation == "deck" && cur) || (App.pulledFrom == "deck" && dropLocation == "deck" ) || currentHandLength < 7
             , isToBeDiscarded = (dropLocation == "discard" && dropLocation != App.pulledFrom) && (currentHandLength >= 7 || initialLocation == "deck") 
-            , isValidMove = dropLocation == "playerHand" && App.validMove;
-
+            , isValidMove = dropLocation == "playerHand" && App.appValidMove;
+        console.log()
         if(App.currentTurn){
 
           if(isDroppedInWrongPlace){
@@ -307,6 +310,7 @@ block footerScripts
             var originalPlace = $(source).data("decktype");
 
             IO.socket.emit("discardCard", {pile: originalPlace, card: cardToDiscard});
+            App.currentTurn = false;
             return;            
           }else if(isValidMove){
             IO.socket.emit("addToHand");
@@ -405,6 +409,8 @@ block footerScripts
       }
       function switchPlayer(data){
         $("#deck").append("<div class='card'></div>");
+        App.appValidMove = true;
+        App.currentTurn = true;
         setCurrentPlayer(data);
       }
 

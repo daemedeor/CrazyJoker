@@ -1,4 +1,4 @@
-{
+s{
   "name": "crazyjokermod",
   "version": "0.0.1",
   "description": "A game involing crazy jokers, crazy contracts, and lots and lots of fun",
@@ -15,13 +15,7 @@
     "http": "0.0.0",
     "jade": "^1.11.0",
     "moment": "^2.10.6",
-    "mongo": "^0.1.0",
-    "mongoose": "^4.1.1",
-    "passport": "^0.2.2",
-    "passport.socketio": "^3.5.1",
     "path": "^0.11.14",
-    "pg": "^4.4.1",
-    "pg-hstore": "^2.3.2",
     "redis": "^0.12.1",
     "sequelize": "^3.5.1",
     "socket.io": "^1.3.6"

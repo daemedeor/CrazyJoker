@@ -2,21 +2,15 @@ var db = require('../models/index.js');
 
 var express = require('express')
     , app = express()
-    , mongo = require("mongo")
-    , mongoose = require("mongoose")
     , server  = require("http").createServer(app)
     , io = require("socket.io")(server)
     , redis = require("redis")
-    , pg = require("pg")
-    , hstore = require("pg-hstore")()
     , client = redis.createClient()
-    , cookie = require('cookie')
     , cookieParser = require('cookie-parser')
     , session = require("express-session")
     , redisStore = require("connect-redis")(session)
     , generalRoutes = require("./Routes.js")
     , bodyParser = require("body-parser")
-    , passportSocketIo = require("passport.socketio")
     , config = require("../config/config")
     , RedisStore = new redisStore({
                                     port: config.session_port,
@@ -31,7 +25,8 @@ var sessionMiddleware = session({
                                     secret: config.cookie_secret,
                                     resave: true,
                                     saveUninitialized: true,
-                                    store: RedisStore
+                                    store: RedisStore,
+                                    key: config.cookie_secret
                                 });
 
 var allowCrossDomain = function (req, res, next) {
@@ -46,7 +41,7 @@ sessionService.initializeRedis(client, RedisStore);
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 app.use(cookieParser(config.cookie_secret));
-app.use(session({ store: RedisStore, key: config.cookie_secret, secret: config.cookie_secret, resave: true, saveUninitialized: true }));
+app.use(sessionMiddleware);
 
 io.use(function(socket, next) {
     var parseCookie = cookieParser(config.cookie_secret);
