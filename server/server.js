@@ -48,7 +48,7 @@ io.use(function(socket, next) {
     var handshake = socket.request;
 
     parseCookie(handshake, null, function (err, data) {
-        sessionService.get(handshake, function (err, session) {
+np        sessionService.get(handshake, function (err, session) {
             if (err)
                 next(new Error(err.message));
             if (!session)
