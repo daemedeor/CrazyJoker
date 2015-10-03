@@ -6,16 +6,11 @@ module.exports = function(app, io, redis){
   var games = {};
 
   app.get('/table/:room', function(req, res) {
-      var share;
+    var share;
 
-      if(req.params.room && (req.params.room in games)) {
-        share = req.params.room;
-      }else {
-        share = generateID(6);
-        req.path = "/table/"+share;
-      }
+    share = (req.params.room) ? req.params.room : generateID(6);
 
-      res.render('table/play.jade', {shareURL: req.protocol + '://' + req.get('host') + req.path, share: share});
+    res.render('table/play.jade', {share: share});
   });
 
   app.get('/table', function(req, res) {
