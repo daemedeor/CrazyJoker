@@ -38,7 +38,7 @@ models.sequelize
       {
         name: "Sum of High",
         description: "The sum of the lowest five cards equal the sum of the two highest cards.",
-        bName: "sumofhigh"
+        bName: "sumOfHigh"
       }
     );
  

@@ -31,9 +31,8 @@
 
 .gu-transit { opacity: 0.2; filter: alpha(opacity=20); }
 
-#deck, #discard { position: relative; }
-#deck.card, #discard.card { margin: 0 10px; }
-#deck .card, #discard .card { margin: 0; }
+#deck, #discard { position: relative; margin: 0 10px; }
+#deck .card, #discard .card { position: absolute; }
 #deck span, #discard span { position: absolute; }
 
 /* Card end */

@@ -46,12 +46,20 @@ block content
 
   #overlay
     .wrapper
-      a#start-button.button(href="#") Start Game
+      .wrapper-inside
+        if !renderForm
+          a#start-button.mdl-button--colored.mdl-button.mdl-js-button.mdl-button--raised.mdl-js-ripple-effect(href="#") Start
 
-      #shareRoom
-        label(for="url") Room URL
-        div(data-room="#{share}", id="room") #{shareURL}
-  
+          #shareRoom
+            label(for="url") Room URL
+            div(data-room="#{share}", id="room") #{shareURL}
+        else
+          a.mdl-button--colored.mdl-button.mdl-js-button.mdl-button--raised.mdl-js-ripple-effect#newGameButton(href="/table/#{share}") New Game
+          p OR
+          form(action="/table/")
+            input(name="room",placeholder="Room Name")
+
+
           
   
   #await
@@ -102,8 +110,9 @@ block footerScripts
           IO.socket.on('addCardToDiscardPile', App.addCardToDiscardPile);
           IO.socket.on('showCard', App.showCard);
           IO.socket.on('validMove', App.validMove);
-          IO.socket.on('changedPlayer', App.setCurrentPlayer);
+          IO.socket.on('changedPlayer', App.switchPlayer);
           IO.socket.on('addCardToHand', App.addCardToHand);
+          IO.socket.on('')
         },
         
         kickout: kickout,
@@ -154,7 +163,7 @@ block footerScripts
         showCard: showCard,
         addCardToDiscardPile: addCardToDiscardPile,
         addCardToHand: addCardToHand,
-
+        switchPlayer: switchPlayer,
         //functions that should remain defined on the table
         init: function() {
 
@@ -208,6 +217,7 @@ block footerScripts
       }
      
       function startNewRound() {
+        App.discardPile.empty();
         IO.socket.emit('newRound');
       }
 
@@ -217,7 +227,7 @@ block footerScripts
       }
 
       function kickout() {
-        window.location = "/lobby";
+        window.location = "/table";
       }
 
       function connected() {
@@ -243,13 +253,14 @@ block footerScripts
             , initialLocation = $(source).data("decktype")
             , currentHandLength = $(".hand","#me").children().length;
 
-        var isDroppedInWrongPlace = (App.pulledFrom == "playerHand" && dropLocation == "deck") || (App.pulledFrom == "deck" && dropLocation == "deck")
-            , isToBeDiscarded = (dropLocation == "discard" && dropLocation != App.pulledFrom) && (currentHandLength == 7 || initialLocation == "deck") 
+        var isDroppedInWrongPlace = (App.pulledFrom == "playerHand" && dropLocation == "deck" && cur) || (App.pulledFrom == "deck" && dropLocation == "deck" ) || currentHandLength < 7
+            , isToBeDiscarded = (dropLocation == "discard" && dropLocation != App.pulledFrom) && (currentHandLength >= 7 || initialLocation == "deck") 
             , isValidMove = dropLocation == "playerHand" && App.validMove;
 
         if(App.currentTurn){
 
           if(isDroppedInWrongPlace){
+            IO.socket.emit("placeBack");      
             App.dragndrop.cancel(true);          
           }else if(isToBeDiscarded){
 
@@ -354,7 +365,8 @@ block footerScripts
         });
       }
       function switchPlayer(data){
-
+        $("#deck").append("<div class='card'></div>");
+        setCurrentPlayer(data);
       }
 
       function setPlayer(data){

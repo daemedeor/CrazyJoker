@@ -5,11 +5,6 @@ var deck = require("./Deck.js")
 module.exports = function(app, io, redis){
   var games = {};
 
-  app.get('/table', function(req, res) {
-      share = generateID(6);
-      res.render('table/play.jade', {shareURL: req.protocol + '://' + req.get('host') + req.path + "/" + share, share: share});
-  });
-
   app.get('/table/:room', function(req, res) {
       var share;
 
@@ -21,6 +16,12 @@ module.exports = function(app, io, redis){
       }
 
       res.render('table/play.jade', {shareURL: req.protocol + '://' + req.get('host') + req.path, share: share});
+  });
+
+  app.get('/table', function(req, res) {
+    share = generateID(6);
+
+    res.render('table/play.jade', {renderForm: true, newRoomID: share});
   });
 
   io.sockets.on("connection", function(socket) {
@@ -247,6 +248,10 @@ module.exports = function(app, io, redis){
           break;
         case "invalidMove":
           message = "This is an invalid, you did something wrong";
+          break;
+        case "noCards":
+          message = "No more cards in the deck";
+          break;
         default: 
           message = "Error!!!";
           break;
@@ -300,7 +305,7 @@ module.exports = function(app, io, redis){
   });
 };
 
-function Game(roomID) {
+function Game(roomID, noOfRoundsToWin) {
   //player information
   this.players = [];
   this.noOfPlayers = 0;
@@ -320,7 +325,7 @@ function Game(roomID) {
   this.roomID = "" + roomID + "";
   this.validMove = false;
   this.lastMove = null;
-
+  this.noOfRoundsToWin = (parseInt(noOfRoundsToWin)) ? noOfRoundsToWin : 3; 
   return this;
 }
 
@@ -363,6 +368,7 @@ Game.prototype.discardACard = function(pile, card){
       var isValid = player.validateHand();
       
       if(isValid.valid && !isValid.warning){
+        console.log('winner');
         return {valid: true, playerHand: isValid.valid, roundFinished: true};
       }else if(!isValid.warning){
         return {valid: true, playerHand: false, cardDiscarded: [card], type: "playerHand", id: this.currentPlayer.id};
@@ -410,7 +416,9 @@ Game.prototype.pullACard = function(pile) {
     }else{
       return {valid: false, warning: "inAppropriateAction"};
     }
-
+    if(!newCard){
+      return { valid: false, warning: "noCards"};
+    }
     this.lastMove = pile;
     this.cardPulled = (!Array.isArray(newCard)) ? [newCard] : newCard;
     this.validMove = true;
@@ -603,21 +611,34 @@ Game.prototype.findPlayerIndex = function(playerId){
 }
 
 Game.prototype.resetRound = function() {
-  this.players.forEach(function(e,i,a){
-    e.choosenContract = false;
-    e.hand = null;
-    e.discarded = true;
-    e.currentContract = null;
+  this.players.forEach(function(player){
+    player.choosenContract = false;
+    player.hand = null;
+    player.discarded = true;
+    player.currentContract = null;
   });
 };
+Game.prototype.isThereAWinningPlayer = function() {
+  var flag = false;
+  var gameRoundsToWin = this.noOfRoundsToWin;
 
+  this.players.some(function(player){
+    if(player.roundsWon >= gameRoundsToWin){
+      flag = true;
+      return true;
+    }
+  });
+
+  return flag;
+
+};
 function Player(hand) {
   this.id = generateID(5);
   this.hand = hand;
   this.discarded = false;
   this.currentContract = null;
   this.contract = [];
-  this.roundWon = 0;
+  this.roundsWon = 0;
   this.choosenContract = false;
 
   return this;
@@ -659,6 +680,7 @@ Player.prototype.discardCard = function(card){
 
   return false;
 }
+
 
 function generateID(length) {
   var haystack = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';

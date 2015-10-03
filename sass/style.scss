@@ -23,9 +23,14 @@
     text-align: center;
     font: 30px/90px Georgia, Times New Roman, serif;
     margin-bottom: 0;
+
+    &:hover{
+
+    }
   }
   
 }
+
 
 [class*="D_"]{
   &:before, &:after {
@@ -132,13 +137,10 @@
 
 #deck, #discard{
   position:relative;
+  margin: 0 10px;
   
-  &.card{
-    margin: 0 10px;
-  }
-
   .card{
-    margin: 0;
+    position: absolute;
   }
 
   span{
@@ -201,22 +203,19 @@
 
   .wrapper{
     position: relative;
-  }
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 100vh;
+    width: 100vw;
+    overflow: hidden;
 
-  #start-button{
-    position: absolute;
-    left: 42vw;
-    top: 37vh;
-    border-radius: 4px;
-    background-color: blue;
-    padding: 15px;
-  }
-
-  #shareRoom{
-    position: absolute;
-    left: 34vw;
-    top: 46vh;
-    text-align: center;
+    .wrapper-inside{
+      position: aboslute;
+      left: 42vw;
+      top: 37vh;
+    }
   }
 }
 
