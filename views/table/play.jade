@@ -44,8 +44,8 @@ block content
         .card
         .card
 
-  #overlay
-    .wrapper
+  .wrapper
+    #overlay
       .wrapper-inside
         if !renderForm
           a#start-button.mdl-button--colored.mdl-button.mdl-js-button.mdl-button--raised.mdl-js-ripple-effect(href="#") Start Game
@@ -62,8 +62,7 @@ block content
               label.input__label.input__label--ruri(for='input-26')
                 span.input__label-content.input__label-content--ruri Room ID
 
-  #await
-    .wrapper
+    #await
       #fountainTextG
         #fountainTextG_1.fountainTextG L
         #fountainTextG_2.fountainTextG o
@@ -75,6 +74,17 @@ block content
         #fountainTextG_8.fountainTextG .
         #fountainTextG_9.fountainTextG .
         #fountainTextG_10.fountainTextG .
+
+
+    #gameWon
+
+      h1 Player 
+        span.playerName
+        span : won!!! With Contract
+        span.contractName
+      h3 Click below when you're ready to start again!
+
+      a.mdl-button--colored.mdl-button.mdl-js-button.mdl-button--raised.mdl-js-ripple-effect#readyBtn(href="#") Ready
 
 block headerStyles
   link(rel="stylesheet", href="/css/dragula.min.css")
@@ -103,7 +113,7 @@ block footerScripts
           IO.socket.on('setPlayer', App.setPlayer);
           IO.socket.on('contractDecided', IO.contractDecided);
           IO.socket.on('playerLeft', App.playerLeft);
-          IO.socket.on('startNewRoundLogic', App.startNewRoundLogic);
+          IO.socket.on('newGameRound', App.newGameRound);
           IO.socket.on('startNewRound', App.startNewRound);
           IO.socket.on('warning', App.warning);
           IO.socket.on('addCardToDiscardPile', App.addCardToDiscardPile);
@@ -111,7 +121,7 @@ block footerScripts
           IO.socket.on('validMove', App.validMove);
           IO.socket.on('changedPlayer', App.switchPlayer);
           IO.socket.on('addCardToHand', App.addCardToHand);
-          IO.socket.on('')
+          IO.socket.on('roundWon', App.roundWon);
         },
         
         kickout: kickout,
@@ -130,8 +140,9 @@ block footerScripts
         me: $("#me"),
         playerId: null,
         roomID: $("#room").data("room"),
-        loading: $("#await"),
-        overlay: $("#overlay"),
+        loading: $("#await, .wrapper"),
+        overlay: $("#overlay, .wrapper"),
+        gameOverlay: $("#gameWon, .wrapper"),
         startButton: $("#start-button"),
         fromHand: '',
         referencedElement: '',
@@ -150,7 +161,6 @@ block footerScripts
         setPlayer: setPlayer,
         startNewRound: startNewRound,
         playerLeft: playerLeft,
-        startNewRoundLogic: startNewRoundLogic,
         setCurrentPlayer: setCurrentPlayer,
         warning: warning,
         pullACard: pullCard,
@@ -163,6 +173,7 @@ block footerScripts
         addCardToDiscardPile: addCardToDiscardPile,
         addCardToHand: addCardToHand,
         switchPlayer: switchPlayer,
+        roundWon: roundWon,
         appValidMove: false,
 
         //functions that should remain defined on the table
@@ -192,6 +203,10 @@ block footerScripts
         e.preventDefault();
         var newRoom = $(this.room).val();
         window.location = "/table/"+newRoom;
+      });
+      
+      $("#readyBtn").click(function(e){
+        e.preventDefault();
       });
 
       (function() {
@@ -227,6 +242,21 @@ block footerScripts
           }
         }
       })();
+      
+      function roundWon(data){
+
+        //set the player who won
+        $(".playerName", "#gameWon").html(data.winner.id);
+        $(".contractName", "#gameWon").html(data.winner.currentContract);
+        
+        //empty the rest of the board
+        App.myHand.empty();
+        App.discardPile.empty();
+        App.currentDeckPile.empt();
+        App.gameOverlay.show();
+
+        IO.socket.emit("pullANewHand");
+      }
 
       function addCardToHand(data) {
         $("[data-id='"+data.id+"'] .hand").append("<div class='card'></card>");
@@ -245,7 +275,7 @@ block footerScripts
         App.currentDeckPile.append("<div class='card'></div>");
       }
 
-      function startNewRoundLogic(data){
+      function newGameRound(data){
         App.hideOverlays();
         App.currentTurn = false;
 
@@ -260,7 +290,7 @@ block footerScripts
       function startNewRound() {
         App.discardPile.empty();
         App.currentDeckPile.empty();
-        IO.socket.emit('newRound');
+        App.gameOverlay();
       }
 
       function contractDecided() {
@@ -278,11 +308,11 @@ block footerScripts
 
       //App functions 
 
-      function warning(data){
+      function warning(data) {
         console.warn(data.message);
       }
 
-      function startNewRound(data){
+      function startNewRound(data) {
         App.hideOverlays();
         $.get("/contracts", {}, function(html){
           $.fancybox(html, { closeBtn: false, modal: true});
@@ -320,9 +350,9 @@ block footerScripts
         }else{
           App.dragndrop.cancel(true);
         }
-
       }
-      function addCardToDiscardPile(data){
+
+      function addCardToDiscardPile(data) {
         var text = data.discardedCard[0].split("_")[1];
         var newText = "<p>"+text+"</p>";
         App.discardPile.append("<div class='card "+data.discardedCard+"' data-card='"+data.discardedCard+"'>"+newText+"</div>");
@@ -346,7 +376,7 @@ block footerScripts
         }
       }
       
-      function showCard(data){ 
+      function showCard(data) { 
           var text = data.newCard[0].split("_")[1];
           $(App.newCard).addClass(data.newCard[0]);
           $(App.newCard).attr("data-card", data.newCard[0]);
@@ -361,7 +391,7 @@ block footerScripts
         IO.socket.emit("join", {room: App.roomID});
       };
       
-      function setCurrentPlayer(id){
+      function setCurrentPlayer(id) {
         id = (id.dealerId) ? id.dealerId : id;
 
         $(".dealer").removeClass("active");

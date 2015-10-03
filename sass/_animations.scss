@@ -1,0 +1,11 @@
+@keyframes bounce_fountainTextG{
+  0%{
+    transform:scale(1);
+    color: #969696;
+  }
+
+  100%{
+    transform:scale(.5);
+    color: rgb(255,255,255);
+  }
+}

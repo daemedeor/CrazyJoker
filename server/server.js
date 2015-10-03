@@ -24,7 +24,7 @@ var sessionService = require('./sessionUpdate');
 var sessionMiddleware = session({
                                     secret: config.cookie_secret,
                                     resave: true,
-                                    saveUninitialized: true,
+                                  saveUninitialized: true,
                                     store: RedisStore,
                                     key: config.cookie_secret
                                 });
@@ -48,7 +48,7 @@ io.use(function(socket, next) {
     var handshake = socket.request;
 
     parseCookie(handshake, null, function (err, data) {
-np        sessionService.get(handshake, function (err, session) {
+        sessionService.get(handshake, function (err, session) {
             if (err)
                 next(new Error(err.message));
             if (!session)

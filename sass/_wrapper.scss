@@ -1,0 +1,213 @@
+#overlay, #await, #gameWon {
+  z-index: 999;
+  background-color: rgba(0,0,0,.83);
+  position: relative;
+  color: white;
+  font-family: Arial;
+  display: none;
+
+  .wrapper & {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 100vh;
+    width: 100vw;
+    overflow: hidden;
+    display: none;
+
+    .wrapper-inside {
+      position: absolute;
+      left: 42vw;
+      top: 37vh;
+      width: 187px;
+    }
+    
+    #shareRoom {
+      margin: 15px 15px 15px 0;
+    }
+
+    a {
+      display: block;
+      margin: 0 auto;
+    }
+  
+    p {
+      text-align: center;
+      margin: 15px;
+    }
+
+    label {
+      text-align: center;
+    }
+
+    .input {
+      position: relative;
+      z-index: 1;
+      display: inline-block;
+      vertical-align: top;
+    }
+
+    .input__field {
+      position: relative;
+      display: block;
+      float: right;
+      padding: 0.8em;
+      width: 60%;
+      border: none;
+      border-radius: 0;
+      background: #f0f0f0;
+      color: #aaa;
+      font-weight: bold;
+      font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+      -webkit-appearance: none; /* for box shadows to show on iOS */
+    }
+
+    .input__field:focus {
+      outline: none;
+    }
+
+    .input__label {
+      display: inline-block;
+      float: right;
+      padding: 0 1em;
+      width: 40%;
+      color: #6a7989;
+      font-weight: bold;
+      font-size: 70.25%;
+      user-select: none;
+    }
+
+    .input__label-content {
+      position: relative;
+      display: block;
+      padding: 1.6em 0;
+      width: 100%;
+    }
+
+    .graphic {
+      position: absolute;
+      top: 0;
+      left: 0;
+      fill: none;
+    }
+
+    .icon {
+      color: #ddd;
+      font-size: 150%;
+    }
+
+    .input__field--ruri {
+      width: 100%;
+      background: transparent;
+      padding: 0.5em 0;
+      margin-bottom: 2em;
+      color: #fff;
+    }
+
+    .input__label--ruri {
+      width: 100%;
+      position: absolute;
+      text-align: left;
+      font-size: 1em;
+      padding: 10px 0 5px;
+      pointer-events: none;
+    }
+
+    .input__label--ruri::after {
+      content: '';
+      position: absolute;
+      width: 100%;
+      height: 7px;
+      background: #B7C3AC;
+      left: 0;
+      top: 100%;
+      transform-origin: 50% 100%;
+      transition: transform 0.3s, background-color 0.3s;
+    }
+
+    .input__label-content--ruri {
+      padding: 0;
+      transform-origin: 0 0;
+      transition: transform 0.3s, color 0.3s;
+    }
+
+    .input__field--ruri:focus + .input__label--ruri::after,
+    .input--filled .input__label--ruri::after {
+      background: #a3d39c;
+      transform: scale3d(1, 0.25, 1);
+    }
+
+    .input__field--ruri:focus + .input__label--ruri .input__label-content--ruri,
+    .input--filled .input__label--ruri .input__label-content--ruri {
+      color: #a3d39c;
+      transform: translate3d(0, 2em, 0) scale3d(0.655, 0.655, 1);
+    }
+  }
+}
+
+#fountainTextG{
+  position: relative;
+  top: 35vh;
+  left: 30vw;
+}
+
+.fountainTextG{
+  color: #969696;
+  font-size: 55px;
+  text-decoration: none;
+  font-weight: normal;
+  font-style: normal;
+  float: left;
+  animation-name: bounce_fountainTextG;
+  animation-duration: 2.09s;
+  animation-iteration-count: infinite;
+  animation-direction: normal;
+  transform: scale(.5);
+
+  &#fountainTextG_1{
+    animation-delay: 0.75s;
+  }
+
+  &#fountainTextG_2{
+    animation-delay: 0.9s;
+  }
+
+  &#fountainTextG_3{
+    animation-delay: 1.05s;
+  }
+
+  &#fountainTextG_4{
+    animation-delay: 1.2s;
+  }
+
+  &#fountainTextG_5{
+    animation-delay: 1.35s;
+  }
+
+  &#fountainTextG_6{
+    animation-delay: 1.5s;
+  }
+
+  &#fountainTextG_7{
+    animation-delay: 1.64s;
+  }
+
+  &#fountainTextG_8{
+    animation-delay: 1.79s;
+  }
+
+  &#fountainTextG_9{
+    animation-delay: 1.94s;
+  }
+
+  &#fountainTextG_10{
+    animation-delay: 2.09s;
+  }
+}
+
+
+.fancybox-lock .fancybox-overlay, html, body{
+  overflow: hidden !important;
+}

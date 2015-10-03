@@ -1,0 +1,95 @@
+/* Card information */
+.card{
+  position: relative;
+  float: left;
+  margin-right: 10px;
+  width: 60px;
+  height: 90px;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 3px 3px 7px rgba(0,0,0,0.3);
+  
+  p {
+    text-align: center;
+    font: 30px/90px Georgia, Times New Roman, serif;
+    margin-bottom: 0;
+  }
+}
+
+[class*="D_"], [class*="H_"], [class*="C_"], [class*="S_"] {
+  &:before {
+    position: absolute;
+    font-size: 25px;
+    left: 5px;
+    top: -10px;
+  }
+
+  &:after {
+    position: absolute;
+    font-size: 25px;
+    right: 5px;
+    bottom: -5px;
+  }
+}
+
+[class*="D_"] {
+  &:before, &:after {
+    content: "♦";
+    color: #ff0000;
+  }
+}
+
+[class*="H_"] {
+  &:before, &:after {
+    content: "♥";
+    color: #ff0000;
+  }
+}
+ 
+[class*="C_"] {
+  &:before, &:after {
+    content: "♣";
+    color: #000;
+  }
+}
+
+ 
+[class*="S_"] {
+  &:before, &:after {
+    content: "♠";
+    color: #000;
+  }
+}
+
+.gu-mirror {
+  position: fixed !important;
+  margin: 0 !important;
+  z-index: 9999 !important;
+  opacity: 0.8;
+  filter: alpha(opacity=80);
+}
+
+.gu-hide {
+  display: none !important;
+}
+.gu-unselectable {
+  user-select: none !important;
+}
+.gu-transit {
+  opacity: 0.2;
+  filter: alpha(opacity=20);
+}
+
+#deck, #discard {
+  position:relative;
+  margin: 0 10px;
+  
+  .card {
+    position: absolute;
+  }
+
+  span{
+    position: absolute;
+  }
+}
+/* Card end */

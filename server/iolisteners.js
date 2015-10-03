@@ -94,21 +94,11 @@ module.exports = function(app, io, redis){
         var areAllGameContractsSet = game.contractsAllSet();
         if(areAllGameContractsSet){
           var isDealer = socket.player.id == game.dealer.id;
-          emitToEveryone('startNewRoundLogic', {message: "Game has officially started", dealerId: game.dealer.id});
+          emitToEveryone('newGameRound', {message: "Game has officially started", dealerId: game.dealer.id});
           game.currentRound++;
         }
 
         updateGame(game);
-      }
-    });
-
-    socket.on('newRound', function(){
-      var game = getGame();
-
-      if(!game.finished){
-        emitToEveryone('renderContract');
-      }else{
-        emitToEveryone('finished', {gameStats: game});
       }
     });
 
@@ -125,7 +115,19 @@ module.exports = function(app, io, redis){
       }
       
     });
-      
+    
+    socket.on("pullANewHand", function(){
+      var game = getGame();
+
+      if(game){
+        var newPlayerHand = game.setPlayerHand(socket.playerID);
+        
+        socket.emit("handSetUp", {hand: newPlayerHand});
+
+        updateGame(game);
+      }
+    });
+
     socket.on("placeBack", function(data){
       var game = getGame();
       
@@ -139,12 +141,12 @@ module.exports = function(app, io, redis){
         socket.emit("validMove", {valid: false});
         updateGame(game);
       }
-
     });
 
     socket.on("addToHand", function(data){
       
       var game = getGame();
+
       if(game){
         var status = game.addToHand();
 
@@ -158,19 +160,19 @@ module.exports = function(app, io, redis){
       }
     });
     
-    socket.on("discardCard", function(data){
+    socket.on("discardCard", function(data) {
       var game = getGame();
 
-      if(game){
+      if(game) {
         var status = game.discardACard(data.pile, data.card);
 
-        if(status.valid){
+        if(status.valid) {
           if(status.playerHand){
             var player = game.currentPlayer;
             game.resetRound();
-            game.setNewDealer();
-            emitToEveryone("RoundWon",{winner: player});
-          }else{
+
+            emitToEveryone("roundWon",{winner: player});
+          }else {
             game.changePlayer();
 
             if(status.type == "deck"){
@@ -183,11 +185,11 @@ module.exports = function(app, io, redis){
           }
 
           updateGame(game);
+
         }else{
           emitWarning(status.warning);
         }
       }
-
     });
   
     socket.on('disconnect', function(data) {
@@ -457,6 +459,16 @@ Game.prototype.updatePlayer = function(player){
   }
 };
 
+Game.prototype.setPlayerHand = function(playerId){
+  var currentPlayer = this.getPlayerIds(playerId);
+  var newHand = this.dealNewHand();
+
+  currentPlayer.hand = newHand;
+  this.updatePlayer(currentPlayer);
+  
+  return newHand;
+};
+
 Game.prototype.setPlayerContract = function(playerId, contract) {
   var currentPlayer = this.getPlayer(playerId);
   currentPlayer.changeContract(contract);
@@ -465,12 +477,12 @@ Game.prototype.setPlayerContract = function(playerId, contract) {
 };
 
 Game.prototype.changePlayer = function() {
- var currentPlayerIndex = this.findPlayerIndex(this.currentPlayer.id); 
- var nextPersonToGet = currentPlayerIndex + 1;
- var newPlayer = this.players[nextPersonToGet % this.noOfPlayers];
- 
- this.currentPlayer = newPlayer;
- this.currentPlayerHand = newPlayer.hand;
+  var currentPlayerIndex = this.findPlayerIndex(this.currentPlayer.id); 
+  var nextPersonToGet = currentPlayerIndex + 1;
+  var newPlayer = this.players[nextPersonToGet % this.noOfPlayers];
+
+  this.currentPlayer = newPlayer;
+  this.currentPlayerHand = newPlayer.hand;
 };
 
 Game.prototype.isPlayerAllowedInRoom = function(id) {
@@ -606,6 +618,11 @@ Game.prototype.findPlayerIndex = function(playerId){
 }
 
 Game.prototype.resetRound = function() {
+  
+  this.setNewDealer();
+  this.currentRound++;
+  this.resetDeck();
+  
   this.players.forEach(function(player){
     player.choosenContract = false;
     player.hand = null;
@@ -613,6 +630,7 @@ Game.prototype.resetRound = function() {
     player.currentContract = null;
   });
 };
+
 Game.prototype.isThereAWinningPlayer = function() {
   var flag = false;
   var gameRoundsToWin = this.noOfRoundsToWin;
@@ -638,6 +656,10 @@ function Player(hand) {
 
   return this;
 }
+
+Player.prototype.newHand = function(hand) {
+  this.hand = hand;
+};
 
 Player.prototype.validateHand = function() {
   return validation(this.hand, this);
