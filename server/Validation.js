@@ -21,7 +21,7 @@ var  cardRank =  {
 var validation = function(currentHand, player){
   var flag = false
       , newCardHand = convertHandToCards(currentHand)
-      , nameOfContract = player.currentContract.backendName
+      , nameOfContract = player.currentContract.backendName || ""
       , reason;
 
   if(nameOfContract){
