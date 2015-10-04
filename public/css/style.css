@@ -130,26 +130,26 @@ td, th { padding: 0; }
 
 @keyframes bounce_fountainTextG { 0% { -webkit-transform: scale(1); transform: scale(1); color: #969696; }
   100% { -webkit-transform: scale(0.5); transform: scale(0.5); color: white; } }
-#overlay, #await, #gameWon { z-index: 999; background-color: rgba(0, 0, 0, 0.83); position: relative; color: white; font-family: Arial; display: none; }
-.wrapper #overlay, .wrapper #await, .wrapper #gameWon { position: absolute; top: 0; left: 0; right: 0; bottom: 0; height: 100vh; width: 100vw; overflow: hidden; display: none; }
-.wrapper #overlay .wrapper-inside, .wrapper #await .wrapper-inside, .wrapper #gameWon .wrapper-inside { position: absolute; left: 42vw; top: 37vh; width: 187px; }
-.wrapper #overlay #shareRoom, .wrapper #await #shareRoom, .wrapper #gameWon #shareRoom { margin: 15px 15px 15px 0; }
-.wrapper #overlay a, .wrapper #await a, .wrapper #gameWon a { display: block; margin: 0 auto; }
-.wrapper #overlay p, .wrapper #await p, .wrapper #gameWon p { text-align: center; margin: 15px; }
-.wrapper #overlay label, .wrapper #await label, .wrapper #gameWon label { text-align: center; }
-.wrapper #overlay .input, .wrapper #await .input, .wrapper #gameWon .input { position: relative; z-index: 1; display: inline-block; vertical-align: top; }
-.wrapper #overlay .input__field, .wrapper #await .input__field, .wrapper #gameWon .input__field { position: relative; display: block; float: right; padding: 0.8em; width: 60%; border: none; border-radius: 0; background: #f0f0f0; color: #aaa; font-weight: bold; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; -webkit-appearance: none; /* for box shadows to show on iOS */ }
-.wrapper #overlay .input__field:focus, .wrapper #await .input__field:focus, .wrapper #gameWon .input__field:focus { outline: none; }
-.wrapper #overlay .input__label, .wrapper #await .input__label, .wrapper #gameWon .input__label { display: inline-block; float: right; padding: 0 1em; width: 40%; color: #6a7989; font-weight: bold; font-size: 70.25%; -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none; }
-.wrapper #overlay .input__label-content, .wrapper #await .input__label-content, .wrapper #gameWon .input__label-content { position: relative; display: block; padding: 1.6em 0; width: 100%; }
-.wrapper #overlay .graphic, .wrapper #await .graphic, .wrapper #gameWon .graphic { position: absolute; top: 0; left: 0; fill: none; }
-.wrapper #overlay .icon, .wrapper #await .icon, .wrapper #gameWon .icon { color: #ddd; font-size: 150%; }
-.wrapper #overlay .input__field--ruri, .wrapper #await .input__field--ruri, .wrapper #gameWon .input__field--ruri { width: 100%; background: transparent; padding: 0.5em 0; margin-bottom: 2em; color: #fff; }
-.wrapper #overlay .input__label--ruri, .wrapper #await .input__label--ruri, .wrapper #gameWon .input__label--ruri { width: 100%; position: absolute; text-align: left; font-size: 1em; padding: 10px 0 5px; pointer-events: none; }
-.wrapper #overlay .input__label--ruri::after, .wrapper #await .input__label--ruri::after, .wrapper #gameWon .input__label--ruri::after { content: ''; position: absolute; width: 100%; height: 7px; background: #B7C3AC; left: 0; top: 100%; -webkit-transform-origin: 50% 100%; -ms-transform-origin: 50% 100%; transform-origin: 50% 100%; -webkit-transition: -webkit-transform 0.3s, background-color 0.3s; transition: transform 0.3s, background-color 0.3s; }
-.wrapper #overlay .input__label-content--ruri, .wrapper #await .input__label-content--ruri, .wrapper #gameWon .input__label-content--ruri { padding: 0; -webkit-transform-origin: 0 0; -ms-transform-origin: 0 0; transform-origin: 0 0; -webkit-transition: -webkit-transform 0.3s, color 0.3s; transition: transform 0.3s, color 0.3s; }
-.wrapper #overlay .input__field--ruri:focus + .input__label--ruri::after, .wrapper #overlay .input--filled .input__label--ruri::after, .wrapper #await .input__field--ruri:focus + .input__label--ruri::after, .wrapper #await .input--filled .input__label--ruri::after, .wrapper #gameWon .input__field--ruri:focus + .input__label--ruri::after, .wrapper #gameWon .input--filled .input__label--ruri::after { background: #a3d39c; -webkit-transform: scale3d(1, 0.25, 1); transform: scale3d(1, 0.25, 1); }
-.wrapper #overlay .input__field--ruri:focus + .input__label--ruri .input__label-content--ruri, .wrapper #overlay .input--filled .input__label--ruri .input__label-content--ruri, .wrapper #await .input__field--ruri:focus + .input__label--ruri .input__label-content--ruri, .wrapper #await .input--filled .input__label--ruri .input__label-content--ruri, .wrapper #gameWon .input__field--ruri:focus + .input__label--ruri .input__label-content--ruri, .wrapper #gameWon .input--filled .input__label--ruri .input__label-content--ruri { color: #a3d39c; -webkit-transform: translate3d(0, 2em, 0) scale3d(0.655, 0.655, 1); transform: translate3d(0, 2em, 0) scale3d(0.655, 0.655, 1); }
+#overlay, #await, #roundWon, #gameWon { z-index: 999; background-color: rgba(0, 0, 0, 0.83); position: relative; color: white; font-family: Arial; display: none; }
+.wrapper #overlay, .wrapper #await, .wrapper #roundWon, .wrapper #gameWon { position: absolute; top: 0; left: 0; right: 0; bottom: 0; height: 100vh; width: 100vw; overflow: hidden; display: none; }
+.wrapper #overlay .wrapper-inside, .wrapper #await .wrapper-inside, .wrapper #roundWon .wrapper-inside, .wrapper #gameWon .wrapper-inside { position: absolute; left: 42vw; top: 37vh; width: 187px; }
+.wrapper #overlay #shareRoom, .wrapper #await #shareRoom, .wrapper #roundWon #shareRoom, .wrapper #gameWon #shareRoom { margin: 15px 15px 15px 0; }
+.wrapper #overlay a, .wrapper #await a, .wrapper #roundWon a, .wrapper #gameWon a { display: block; margin: 0 auto; }
+.wrapper #overlay p, .wrapper #await p, .wrapper #roundWon p, .wrapper #gameWon p { text-align: center; margin: 15px; }
+.wrapper #overlay label, .wrapper #await label, .wrapper #roundWon label, .wrapper #gameWon label { text-align: center; }
+.wrapper #overlay .input, .wrapper #await .input, .wrapper #roundWon .input, .wrapper #gameWon .input { position: relative; z-index: 1; display: inline-block; vertical-align: top; }
+.wrapper #overlay .input__field, .wrapper #await .input__field, .wrapper #roundWon .input__field, .wrapper #gameWon .input__field { position: relative; display: block; float: right; padding: 0.8em; width: 60%; border: none; border-radius: 0; background: #f0f0f0; color: #aaa; font-weight: bold; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; -webkit-appearance: none; /* for box shadows to show on iOS */ }
+.wrapper #overlay .input__field:focus, .wrapper #await .input__field:focus, .wrapper #roundWon .input__field:focus, .wrapper #gameWon .input__field:focus { outline: none; }
+.wrapper #overlay .input__label, .wrapper #await .input__label, .wrapper #roundWon .input__label, .wrapper #gameWon .input__label { display: inline-block; float: right; padding: 0 1em; width: 40%; color: #6a7989; font-weight: bold; font-size: 70.25%; -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none; }
+.wrapper #overlay .input__label-content, .wrapper #await .input__label-content, .wrapper #roundWon .input__label-content, .wrapper #gameWon .input__label-content { position: relative; display: block; padding: 1.6em 0; width: 100%; }
+.wrapper #overlay .graphic, .wrapper #await .graphic, .wrapper #roundWon .graphic, .wrapper #gameWon .graphic { position: absolute; top: 0; left: 0; fill: none; }
+.wrapper #overlay .icon, .wrapper #await .icon, .wrapper #roundWon .icon, .wrapper #gameWon .icon { color: #ddd; font-size: 150%; }
+.wrapper #overlay .input__field--ruri, .wrapper #await .input__field--ruri, .wrapper #roundWon .input__field--ruri, .wrapper #gameWon .input__field--ruri { width: 100%; background: transparent; padding: 0.5em 0; margin-bottom: 2em; color: #fff; }
+.wrapper #overlay .input__label--ruri, .wrapper #await .input__label--ruri, .wrapper #roundWon .input__label--ruri, .wrapper #gameWon .input__label--ruri { width: 100%; position: absolute; text-align: left; font-size: 1em; padding: 10px 0 5px; pointer-events: none; }
+.wrapper #overlay .input__label--ruri::after, .wrapper #await .input__label--ruri::after, .wrapper #roundWon .input__label--ruri::after, .wrapper #gameWon .input__label--ruri::after { content: ''; position: absolute; width: 100%; height: 7px; background: #B7C3AC; left: 0; top: 100%; -webkit-transform-origin: 50% 100%; -ms-transform-origin: 50% 100%; transform-origin: 50% 100%; -webkit-transition: -webkit-transform 0.3s, background-color 0.3s; transition: transform 0.3s, background-color 0.3s; }
+.wrapper #overlay .input__label-content--ruri, .wrapper #await .input__label-content--ruri, .wrapper #roundWon .input__label-content--ruri, .wrapper #gameWon .input__label-content--ruri { padding: 0; -webkit-transform-origin: 0 0; -ms-transform-origin: 0 0; transform-origin: 0 0; -webkit-transition: -webkit-transform 0.3s, color 0.3s; transition: transform 0.3s, color 0.3s; }
+.wrapper #overlay .input__field--ruri:focus + .input__label--ruri::after, .wrapper #overlay .input--filled .input__label--ruri::after, .wrapper #await .input__field--ruri:focus + .input__label--ruri::after, .wrapper #await .input--filled .input__label--ruri::after, .wrapper #roundWon .input__field--ruri:focus + .input__label--ruri::after, .wrapper #roundWon .input--filled .input__label--ruri::after, .wrapper #gameWon .input__field--ruri:focus + .input__label--ruri::after, .wrapper #gameWon .input--filled .input__label--ruri::after { background: #a3d39c; -webkit-transform: scale3d(1, 0.25, 1); transform: scale3d(1, 0.25, 1); }
+.wrapper #overlay .input__field--ruri:focus + .input__label--ruri .input__label-content--ruri, .wrapper #overlay .input--filled .input__label--ruri .input__label-content--ruri, .wrapper #await .input__field--ruri:focus + .input__label--ruri .input__label-content--ruri, .wrapper #await .input--filled .input__label--ruri .input__label-content--ruri, .wrapper #roundWon .input__field--ruri:focus + .input__label--ruri .input__label-content--ruri, .wrapper #roundWon .input--filled .input__label--ruri .input__label-content--ruri, .wrapper #gameWon .input__field--ruri:focus + .input__label--ruri .input__label-content--ruri, .wrapper #gameWon .input--filled .input__label--ruri .input__label-content--ruri { color: #a3d39c; -webkit-transform: translate3d(0, 2em, 0) scale3d(0.655, 0.655, 1); transform: translate3d(0, 2em, 0) scale3d(0.655, 0.655, 1); }
 
 #fountainTextG { position: relative; top: 35vh; left: 30vw; }
 
@@ -216,6 +216,8 @@ td, th { padding: 0; }
 /* Table Information */
 #middle-of-table { left: 40vw; top: 35vh; position: absolute; }
 
-.dealer.active::before { content: ''; display: block; width: 100px; height: 100px; border-radius: 50%; margin: 0 auto; background-color: #D0AE2A; }
+.dealer { position: relative; margin: 0 auto; width: 100px; height: 100px; border-radius: 50%; background-color: #D0AE2A; display: none; }
+.dealer.active { display: block; }
+.dealer.active:before { content: attr(data-contract); vertical-align: -50%; font-size: .8em; position: absolute; top: 32%; width: 60%; left: 30%; }
 
 /* Table informattion end*/
