@@ -1,6 +1,6 @@
 
 $(function() {
-  
+
   $("#newRoom").submit(function(e){
     e.preventDefault();
     var newRoom = $(this.room).val();

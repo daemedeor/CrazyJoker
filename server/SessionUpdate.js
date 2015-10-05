@@ -40,11 +40,13 @@ var self = module.exports = {
         try {
             session.reload(function () {
                 session.touch().save();
-                callback(null, session);
+                if(callback)
+                    callback(null, session);
             });
         }
         catch (err) {
-            callback(err);
+            if(callback)
+                callback(err);
         }
     },
     setSessionProperty: function (session, propertyName, propertyValue, callback) {
@@ -54,8 +56,9 @@ var self = module.exports = {
     getSessionProperty: function(session, propertyName, callback){
         try{
             var value = session[propertyName];
+
             if(callback){
-                callback(value);
+                callback(null, value);
             }   
         }
         catch(err){

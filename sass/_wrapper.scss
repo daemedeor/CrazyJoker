@@ -18,10 +18,11 @@
     display: none;
 
     .wrapper-inside {
-      position: absolute;
-      left: 42vw;
-      top: 37vh;
-      width: 187px;
+      position: relative;
+      top: 35vh;
+      margin: 0 auto;
+      width: 35%;
+      color: white !important;
     }
     
     #shareRoom {
@@ -41,12 +42,18 @@
     label {
       text-align: center;
     }
+    
+    #goBtn{
+      width: 25%;
+    }
 
     .input {
       position: relative;
       z-index: 1;
       display: inline-block;
       vertical-align: top;
+      width: 75%;
+      padding: 0 15px 0 0;
     }
 
     .input__field {
@@ -118,7 +125,7 @@
     .input__label--ruri::after {
       content: '';
       position: absolute;
-      width: 100%;
+      width: 95%;
       height: 7px;
       background: #B7C3AC;
       left: 0;

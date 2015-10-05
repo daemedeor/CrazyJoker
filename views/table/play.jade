@@ -61,6 +61,8 @@ block content
               input#input-26.input__field.input__field--ruri(type='text',name="room")
               label.input__label.input__label--ruri(for='input-26')
                 span.input__label-content.input__label-content--ruri Room ID
+            button(type="submit")#goBtn.mdl-button--colored.mdl-button.mdl-js-button.mdl-button--raised.mdl-js-ripple-effect GO !
+
 
     #await
       #fountainTextG
@@ -76,13 +78,14 @@ block content
         #fountainTextG_10.fountainTextG .
 
     #roundWon
-      h1 Player 
-        span.playerName
-        span : won!!! With Contract
-        span.contractName
-      h3 Click below when you're ready to start again!
+      div.wrapper-inside
+        h1 Player 
+          span.playerName
+          span : won!!! With Contract
+          span.contractName
+        h3 Click below when you're ready to start again!
 
-      a.mdl-button--colored.mdl-button.mdl-js-button.mdl-button--raised.mdl-js-ripple-effect#readyBtn(href="#") Ready
+        a.mdl-button--colored.mdl-button.mdl-js-button.mdl-button--raised.mdl-js-ripple-effect#readyBtn(href="#") Ready
 
     #gameWon
 
@@ -133,7 +136,7 @@ block footerScripts
         
         //elements of the game
         draggableElements: ["#me .hand", "#deck", "#discard"],
-        currentDeckPile: $("#deck"),
+        deckPile: $("#deck"),
         discardPile: $("#discard"),
         table: $("#table"),
         myHand: $(".hand", "#me"),
@@ -214,9 +217,11 @@ block footerScripts
         //empty the rest of the board
         App.myHand.empty();
         App.discardPile.empty();
-        App.currentDeckPile.empt();
+        App.deckPile.empty();
         App.gameOverlay.show();
+        $(".dealer").removeClass("active");
 
+        console.log("Won Round");
         IO.socket.emit("pullANewHand");
       }
 
@@ -233,8 +238,8 @@ block footerScripts
       }
 
       function addCardToTable(){
-        App.currentDeckPile.empty();
-        App.currentDeckPile.append("<div class='card'></div>");
+        App.deckPile.empty();
+        App.deckPile.append("<div class='card'></div>");
       }
 
       function newGameRound(data){
@@ -248,9 +253,9 @@ block footerScripts
         setCurrentPlayer(data);
       }
 
-      function contractDecided() {
+      function contractDecided(data) {
         App.waiting();
-        IO.socket.emit('updateContract');
+        IO.socket.emit('updateContract', data);
       }
 
       function kickout() {
@@ -269,6 +274,9 @@ block footerScripts
 
       function startNewRound(data) {
         App.hideOverlays();
+        App.discardPile.empty();
+        App.deckPile.empty();
+
         $.get("/contracts", {}, function(html){
           $.fancybox(html, { closeBtn: false, modal: true});
         });
@@ -283,7 +291,6 @@ block footerScripts
         var isDroppedInWrongPlace = (App.pulledFrom == "playerHand" && dropLocation == "deck" && cur) || (App.pulledFrom == "deck" && dropLocation == "deck" ) || currentHandLength < 7
             , isToBeDiscarded = (dropLocation == "discard" && dropLocation != App.pulledFrom) && (currentHandLength >= 7 || initialLocation == "deck") 
             , isValidMove = dropLocation == "playerHand" && App.appValidMove;
-        console.log()
         if(App.currentTurn){
 
           if(isDroppedInWrongPlace){
@@ -332,10 +339,14 @@ block footerScripts
       }
       
       function showCard(data) { 
-        var text = data.newCard[0].split("_")[1];
-        $(App.newCard).addClass(data.newCard[0]);
-        $(App.newCard).attr("data-card", data.newCard[0]);
-        $(App.newCard).append("<p>"+text+"</p>");
+        if(data.deckType != "discard") {
+          var text = data.newCard[0].split("_")[1];
+          $(App.newCard).addClass(data.newCard[0]);
+          $(App.newCard).attr("data-card", data.newCard[0]);
+          $(App.newCard).append("<p>"+text+"</p>");
+        }else {
+          $("[data-card='"+data.newCard[0]+"]").remove();
+        }
       }
 
       function pullCard() {
@@ -347,14 +358,15 @@ block footerScripts
       };
       
       function setCurrentPlayer(data) {
-        console.log(data);
+     
         var currentId = (data.dealerId) ? data.dealerId : data;
         var contract = (data.contract) ? data.contract.contractName.trim() : "";
-
+        
         $(".dealer").removeClass("active");
         $(".dealer","[data-id="+currentId+"]").removeAttr("data-contract");
         $(".dealer","[data-id="+currentId+"]").addClass("active");
-        $(".dealer","[data-id="+currentId+"]").attr("data-contract", contract);
+        $(".dealer","[data-id="+currentId+"]").attr("data-contract", contract);        
+      
       }
 
       function waiting() {
@@ -395,6 +407,8 @@ block footerScripts
             return;
           }
         });
+
+        setCurrentPlayer(data);
       }
       function switchPlayer(data){
         $("#deck").append("<div class='card'></div>");
@@ -404,7 +418,7 @@ block footerScripts
       }
 
       function setPlayer(data){
-        var players = data.players
+        var players = data.players || []
             , currentIds = []
             , currentIdOfPlayer
             , currentPlayer
@@ -424,6 +438,7 @@ block footerScripts
 
             currentPlayer = $("#player-"+ emptyPlayer, "#table");
             id = currentPlayer.data("id");
+
             if(!id){
               if(currentIds.indexOf(e) == -1){
                 currentPlayer.attr('data-id', e);

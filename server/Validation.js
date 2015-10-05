@@ -1,7 +1,7 @@
 var moment = require("moment");
 var  cardRank =  {
-  "K" : 13,
   "A" : 14,
+  "K" : 13,
   "Q" : 12,
   "J" : 11,
   "faceCards": ["K", "A", "Q", "J"],
@@ -24,7 +24,7 @@ var validation = function(currentHand, player){
       , nameOfContract = player.currentContract.backendName || ""
       , reason;
 
-  if(nameOfContract){
+  if(nameOfContract) {
     switch(nameOfContract.toLowerCase()){
       case "fullfullhouse":
         flag = isFullFullHouseValid(newCardHand);
@@ -57,8 +57,7 @@ var validation = function(currentHand, player){
       default:
         reason = "nonExistentContract";
     }
-
-  }else{
+  }else {
     reason = "noContract";
   }
 
@@ -123,35 +122,48 @@ function isFixedStraightValidated (hand) {
       , previousValue = 0
       , isCurrentlyValid = false;
   
-  hand = hand.sort(function(a,b){
+  //sort the hand by value
+  sortedHand = hand.sort(function(a,b){
     return a.value - b.value;
   });
 
-  //if the value is 5 to two
-  //impossible to have queen
-  if(hand[0].value < 6 && hand[0].value >= 2){
-    this.flag = false;
-    return;
+  //move the cards that should map around to the end of the hand
+  if(sortedHand[0].value >= 2 && sortedHand[0].value <= 5){
+    for(var i = 0, r = sortedHand.length; i < r; i++){
+      if(sortedHand[0].value <= 5){
+        var moveCardToBack = sortedHand.shift();
+        sortedHand.push(moveCardToBack);
+      }else{
+        break;
+      }
+    }
   }
 
   //check the newly sorted hand for inconsistencies
-  hand.some(function(card, i){
+  sortedHand.some(function(card, i) {
     
     if(card.rank == "Q"){
       hasQueen = true;
     }
     
-    if(previousValue || card.rank == "K"){
+    if(previousValue) {
      
-      if(card.value != ((previousValue % 14) + 1)){
-        inOrder = false;
-        return true;
-      }else{
+      //there is no card.value = 1 so allow it to wrap
+      if(card.rank == "2" || card.value == ((previousValue % 14) + 1)) {   
+        
+        //get the value back to the 2
+        if(card.rank == "2"){
+          previousValue++;
+        }
+
         previousValue++;
         inOrder = true;
+      }else{
+        inOrder = false;
+        return true;
       }
 
-    }else{
+    }else {
       previousValue = card.value;
     }
 
@@ -317,6 +329,13 @@ function isFaceCard(rank){
   }
 
   return false;
+}
+
+function arrayObjectIndexOf(myArray, searchTerm, property) {
+  for(var i = 0, len = myArray.length; i < len; i++) {
+    if (myArray[i][property] === searchTerm) return i;
+  }
+  return -1;
 }
 
 function isEven(number){

@@ -57,7 +57,9 @@ module.exports = function(app, io, redis){
         player = new Player(game.dealNewHand());
       }
       setSession("alreadyPlayedContracts", []);
+      setSession("currentContract", "none");
       setSession("socketId", socket.id);
+
       //add the new player that was created
       game.addPlayer(player);
       socket.join(roomID);
@@ -85,22 +87,29 @@ module.exports = function(app, io, redis){
 
     socket.on('updateContract', function(data){
       var game = getGame();
-      var currentContract = socket.request.session["currentContract"];
+    
+      if(game) {
 
-      if(game){
+        getSession("alreadyPlayedContracts", function(err, alreadyPlayedContract){
+          if(!err && alreadyPlayedContract){
+            alreadyPlayedContract.push(data);
+          }
+        });
 
-        game.setPlayerContract(socket.playerID, currentContract);
-        
+        game.setPlayerContract(socket.playerID, data);
+      
         var areAllGameContractsSet = game.contractsAllSet();
 
         if(areAllGameContractsSet){
-
           var isDealer = socket.player.id == game.dealer.id;
           emitToEveryone('newGameRound', {message: "Game has officially started", dealerId: game.dealer.id, contract: game.dealer.currentContract});
         }
 
         updateGame(game);
+      }else{
+        emitWarning("contractUnset");
       }
+       
     });
 
     socket.on('pullACard', function(data){
@@ -152,7 +161,8 @@ module.exports = function(app, io, redis){
         var status = game.addToHand();
 
         if(status.valid){
-          socket.emit("showCard", {newCard: status.newCard});
+
+          socket.emit("showCard", {newCard: status.newCard, deckType: status.deckType});
           emitToEveryoneButSelf("addCardToHand", {id: status.id});
           updateGame(game);
         }else{
@@ -203,17 +213,16 @@ module.exports = function(app, io, redis){
       var game = getGame(socket.currentRoom);
   
       if(game && socket.player){
-
-        if(socket.player.id){
-          game.removePlayer(socket.player.id);
-        }
-
-        if(game.noOfPlayers <= 0){
+       
+        var deletedPlayer = game.removePlayer(socket.player.id);
+        
+        if(game.noOfPlayers <= 0) {
           delete games[socket.currentRoom];
           console.log("deleted a room");
-        }else{
+        }else if(deletedPlayer) {
           updateGame(game);
-          emitToEveryoneButSelf('playerLeft', {message: "A player disconnected!", playerId: socket.player.id});
+          var currentPlayerID = (!game.currentPlayer) ? "" : game.currentPlayer.id;
+          emitToEveryoneButSelf('playerLeft', {message: "A player disconnected!", playerId: socket.player.id, dealerId: currentPlayerID});
         }
       }
     });
@@ -222,6 +231,9 @@ module.exports = function(app, io, redis){
       var message, toDiscard = false;
 
       switch(warning){
+        case "contractUnset":
+          message = "The contract wasn't finished!!!!";
+          break;
         case "cardPlayed":
           message =  "There's already a card played!";
           break;
@@ -287,6 +299,17 @@ module.exports = function(app, io, redis){
           cb(data);
       });
     }
+    
+    function getSession(property, cb) {
+      sessionService.getSessionProperty(socket.request.session, property,  function(err, data) {
+        if(err){
+          cb(err);
+          return;
+        }
+        if(cb)
+          cb(err, data);
+      });
+    }
 
     function emitToEveryone(action, data){
       io.sockets.in(socket.currentRoom).emit(action, data);
@@ -336,20 +359,20 @@ function Game(roomID, noOfRoundsToWin) {
 }
 //Heavy Game Logic
 Game.prototype.contractsAllSet = function() {
-  var flag = true;
+  var flag = false;
 
-  this.players.forEach(function(e){
+  this.players.some(function(e){
     if(!e.choosenContract){
-      flag = false;
-      return;
+      flag = true;
+      return true;
     }
   });
 
-  if(flag){
+  if(!flag){
     this.setNewDealer();
   }
 
-  return flag;
+  return !flag;
 };
 
 Game.prototype.resetRound = function() {
@@ -402,7 +425,7 @@ Game.prototype.addToHand = function() {
 
     this.validMove = false;
     
-    return {valid: true, newCard: [cardToHand], id: player.id};
+    return {valid: true, newCard: [cardToHand], id: player.id, deckType: this.lastMove};
   }else{
     return {valid: false, warning: "invalidMove"};
   }
@@ -432,7 +455,6 @@ Game.prototype.discardACard = function(pile, card){
       var isValid = player.validateHand();
       
       if(isValid.valid && !isValid.warning){
-        console.log('winner');
         return {valid: true, playerHand: isValid.valid, roundFinished: true};
       }else if(!isValid.warning){
         return {valid: true, playerHand: false, cardDiscarded: [card], type: "playerHand", id: this.currentPlayer.id};
@@ -549,7 +571,7 @@ Game.prototype.changePlayer = function() {
   var newPlayer = this.players[nextPersonToGet % this.noOfPlayers];
 
   this.currentPlayer = newPlayer;
-  this.currentPlayerHand = newPlayer.hand;
+  this.currentPlayerHand =  (newPlayer) ? newPlayer.hand : [];
 };
 
 Game.prototype.isPlayerAllowedInRoom = function(id) {
@@ -583,8 +605,14 @@ Game.prototype.removePlayer = function(playerId) {
   var playerIndex = this.findPlayerIndex(playerId);
   
   if(playerIndex > -1){
+    var playerToDelete = this.players[playerIndex];
     this.players.splice(playerIndex, 1);
     this.noOfPlayers--;
+
+    if(this.currentPlayer && playerToDelete.id == this.currentPlayer.id){
+      this.changePlayer();
+    }
+
   }else{
     return false;
   }
