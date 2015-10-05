@@ -145,7 +145,8 @@ block footerScripts
         roomID: $("#room").data("room"),
         loading: $("#await, .wrapper"),
         overlay: $("#overlay, .wrapper"),
-        gameOverlay: $("#roundWon, .wrapper"),
+        roundOverlay: $("#roundWon, .wrapper"),
+        wonOverlay: $("#gameWon, .wrapper"),
         startButton: $("#startBtn"),
         fromHand: '',
         referencedElement: '',
@@ -205,20 +206,23 @@ block footerScripts
       
       $("#readyBtn").click(function(e){
         e.preventDefault();
-        IO.socket.emit("startGame")
+        IO.socket.emit("startGame");
       });
-
+      
       function roundWon(data){
-        
+
+        console.log(data.winner);
+
         //set the player who won
         $(".playerName", "#roundWon").html(data.winner.id);
-        $(".contractName", "#roundWon").html(data.winner.currentContract)
+        $(".contractName", "#roundWon").html(data.winner.currentContract);
         
         //empty the rest of the board
         App.myHand.empty();
         App.discardPile.empty();
         App.deckPile.empty();
-        App.gameOverlay.show();
+        App.roundOverlay.show();
+
         $(".dealer").removeClass("active");
 
         console.log("Won Round");
@@ -238,13 +242,16 @@ block footerScripts
       }
 
       function addCardToTable(){
+        console.log("adding a card");
         App.deckPile.empty();
         App.deckPile.append("<div class='card'></div>");
       }
 
       function newGameRound(data){
+        console.log("Dealer ID: ", data.dealerId, "AppID: ", App.playerId, "The test: ", data.dealerId == App.playerId);
         App.hideOverlays();
         App.currentTurn = false;
+
         if(data.dealerId == App.playerId){
           App.addCardToTable();    
           App.currentTurn = true;  
@@ -315,11 +322,13 @@ block footerScripts
       }
 
       function addCardToDiscardPile(data) {
-        var text = data.discardedCard[0].split("_")[1];
-        var newText = "<p>"+text+"</p>";
-        App.discardPile.append("<div class='card "+data.discardedCard+"' data-card='"+data.discardedCard+"'>"+newText+"</div>");
-        if(data.type != "deck"){
-          removeCardFromHand(data);
+        if(data.discardedCard[0]){
+          var text = data.discardedCard[0].split("_")[1];
+          var newText = "<p>"+text+"</p>";
+          App.discardPile.append("<div class='card "+data.discardedCard+"' data-card='"+data.discardedCard+"'>"+newText+"</div>");
+          if(data.type != "deck"){
+            removeCardFromHand(data);
+          }        
         }
       }
 
@@ -339,7 +348,7 @@ block footerScripts
       }
       
       function showCard(data) { 
-        if(data.deckType != "discard") {
+        if(data.deckType != "discard" && data.newCard[0]) {
           var text = data.newCard[0].split("_")[1];
           $(App.newCard).addClass(data.newCard[0]);
           $(App.newCard).attr("data-card", data.newCard[0]);
@@ -376,6 +385,7 @@ block footerScripts
       function hideOverlays() {
         App.loading.hide();
         App.overlay.hide();
+        App.roundOverlay.hide();
       }
   
       function registerDragEvents(dragndrop) {
@@ -384,7 +394,7 @@ block footerScripts
         dragndrop.on("drop", App.drop);
       }
 
-      function handSetup(data){
+      function handSetup(data) {
         var text, newCard;
         App.myHand.empty();
         App.me.attr("data-id", data.id);

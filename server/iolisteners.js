@@ -56,6 +56,7 @@ module.exports = function(app, io, redis){
         game = new Game(roomID);
         player = new Player(game.dealNewHand());
       }
+
       setSession("alreadyPlayedContracts", []);
       setSession("currentContract", "none");
       setSession("socketId", socket.id);
@@ -87,12 +88,13 @@ module.exports = function(app, io, redis){
 
     socket.on('updateContract', function(data){
       var game = getGame();
-    
+
       if(game) {
 
         getSession("alreadyPlayedContracts", function(err, alreadyPlayedContract){
           if(!err && alreadyPlayedContract){
             alreadyPlayedContract.push(data);
+            setSession("alreadyPlayedContracts", alreadyPlayedContract);
           }
         });
 
@@ -101,15 +103,15 @@ module.exports = function(app, io, redis){
         var areAllGameContractsSet = game.contractsAllSet();
 
         if(areAllGameContractsSet){
-          var isDealer = socket.player.id == game.dealer.id;
-          emitToEveryone('newGameRound', {message: "Game has officially started", dealerId: game.dealer.id, contract: game.dealer.currentContract});
+          var newDealer = (game.dealer) ? game.dealer : game.setNewDealer();
+
+          emitToEveryone('newGameRound', {message: "Round has officially started", dealerId: game.dealer.id, contract: game.dealer.currentContract});
         }
 
         updateGame(game);
       }else{
         emitWarning("contractUnset");
       }
-       
     });
 
     socket.on('pullACard', function(data){
@@ -132,7 +134,7 @@ module.exports = function(app, io, redis){
       if(game){
         var newPlayerHand = game.setPlayerHand(socket.playerID);
         
-        socket.emit("handSetUp", {hand: newPlayerHand});
+        socket.emit("handSetUp", {hand: newPlayerHand, id: socket.playerID});
 
         updateGame(game);
       }
@@ -282,9 +284,7 @@ module.exports = function(app, io, redis){
       game.started = true;
       game.currentRound++;
 
-      var newDealer = (game.dealer) ? game.dealer : game.setNewDealer();
-
-      emitToEveryone('startNewRound', {message: "Starting a new game", dealer: newDealer.id});
+      emitToEveryone('startNewRound', {message: "Starting a new game"});
 
       updateGame(game);
     }
@@ -379,6 +379,11 @@ Game.prototype.resetRound = function() {
   
   this.setNewDealer();
   this.currentRound++;
+  this.discardPile = [];
+  this.cardPulled = null;
+  this.dealer = null;
+  this.validMove = false;
+  this.lastMove = null;
   this.resetDeck();
   
   this.players.forEach(function(player){
@@ -392,10 +397,10 @@ Game.prototype.resetRound = function() {
 Game.prototype.isStillChoosing = function() {
   var flag = true;
 
-  this.players.forEach(function(e,i){
+  this.players.some(function(e,i){
     if(!e.choosenContract){
       flag = false;
-      return;
+      return true;
     }
   });
 
@@ -675,10 +680,10 @@ Game.prototype.findPlayerIndex = function(playerId){
 
   var foundIndex = -1;
 
-  this.players.forEach(function(e,i){
+  this.players.some(function(e,i){
     if(e.id == playerId){
      foundIndex = i;
-     return;
+     return true;
     }
   });
 
@@ -712,13 +717,13 @@ Player.prototype.addContract = function(contract) {
 Player.prototype.changeContract = function(contract) {
   var indexOf = -1;
 
-  this.contract.forEach(function(e,i){
-    if(e.id == contract.id){
+  this.contract.some(function(e,i){
+    if(e.contractId == contract.contractId){
       indexOf = i;
-      return;
+      return true;
     };
   });
-
+  
   if(indexOf == -1){
     this.currentContract = contract;
     this.choosenContract = true;

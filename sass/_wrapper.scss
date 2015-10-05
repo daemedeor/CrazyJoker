@@ -22,7 +22,6 @@
       top: 35vh;
       margin: 0 auto;
       width: 35%;
-      color: white !important;
     }
     
     #shareRoom {
@@ -118,7 +117,7 @@
       position: absolute;
       text-align: left;
       font-size: 1em;
-      padding: 10px 0 5px;
+      padding: 10px 0 0 0;
       pointer-events: none;
     }
 
@@ -152,6 +151,10 @@
       transform: translate3d(0, 2em, 0) scale3d(0.655, 0.655, 1);
     }
   }
+}
+
+#roundWon .wrapper-inside *{
+  color: white !important;
 }
 
 #fountainTextG{

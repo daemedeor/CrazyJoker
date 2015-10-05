@@ -132,7 +132,7 @@ td, th { padding: 0; }
   100% { -webkit-transform: scale(0.5); transform: scale(0.5); color: white; } }
 #overlay, #await, #roundWon, #gameWon { z-index: 999; background-color: rgba(0, 0, 0, 0.83); position: relative; color: white; font-family: Arial; display: none; }
 .wrapper #overlay, .wrapper #await, .wrapper #roundWon, .wrapper #gameWon { position: absolute; top: 0; left: 0; right: 0; bottom: 0; height: 100vh; width: 100vw; overflow: hidden; display: none; }
-.wrapper #overlay .wrapper-inside, .wrapper #await .wrapper-inside, .wrapper #roundWon .wrapper-inside, .wrapper #gameWon .wrapper-inside { position: relative; top: 35vh; margin: 0 auto; width: 35%; color: white !important; }
+.wrapper #overlay .wrapper-inside, .wrapper #await .wrapper-inside, .wrapper #roundWon .wrapper-inside, .wrapper #gameWon .wrapper-inside { position: relative; top: 35vh; margin: 0 auto; width: 35%; }
 .wrapper #overlay #shareRoom, .wrapper #await #shareRoom, .wrapper #roundWon #shareRoom, .wrapper #gameWon #shareRoom { margin: 15px 15px 15px 0; }
 .wrapper #overlay a, .wrapper #await a, .wrapper #roundWon a, .wrapper #gameWon a { display: block; margin: 0 auto; }
 .wrapper #overlay p, .wrapper #await p, .wrapper #roundWon p, .wrapper #gameWon p { text-align: center; margin: 15px; }
@@ -146,11 +146,13 @@ td, th { padding: 0; }
 .wrapper #overlay .graphic, .wrapper #await .graphic, .wrapper #roundWon .graphic, .wrapper #gameWon .graphic { position: absolute; top: 0; left: 0; fill: none; }
 .wrapper #overlay .icon, .wrapper #await .icon, .wrapper #roundWon .icon, .wrapper #gameWon .icon { color: #ddd; font-size: 150%; }
 .wrapper #overlay .input__field--ruri, .wrapper #await .input__field--ruri, .wrapper #roundWon .input__field--ruri, .wrapper #gameWon .input__field--ruri { width: 100%; background: transparent; padding: 0.5em 0; margin-bottom: 2em; color: #fff; }
-.wrapper #overlay .input__label--ruri, .wrapper #await .input__label--ruri, .wrapper #roundWon .input__label--ruri, .wrapper #gameWon .input__label--ruri { width: 100%; position: absolute; text-align: left; font-size: 1em; padding: 10px 0 5px; pointer-events: none; }
+.wrapper #overlay .input__label--ruri, .wrapper #await .input__label--ruri, .wrapper #roundWon .input__label--ruri, .wrapper #gameWon .input__label--ruri { width: 100%; position: absolute; text-align: left; font-size: 1em; padding: 10px 0 0 0; pointer-events: none; }
 .wrapper #overlay .input__label--ruri::after, .wrapper #await .input__label--ruri::after, .wrapper #roundWon .input__label--ruri::after, .wrapper #gameWon .input__label--ruri::after { content: ''; position: absolute; width: 95%; height: 7px; background: #B7C3AC; left: 0; top: 100%; -webkit-transform-origin: 50% 100%; -ms-transform-origin: 50% 100%; transform-origin: 50% 100%; -webkit-transition: -webkit-transform 0.3s, background-color 0.3s; transition: transform 0.3s, background-color 0.3s; }
 .wrapper #overlay .input__label-content--ruri, .wrapper #await .input__label-content--ruri, .wrapper #roundWon .input__label-content--ruri, .wrapper #gameWon .input__label-content--ruri { padding: 0; -webkit-transform-origin: 0 0; -ms-transform-origin: 0 0; transform-origin: 0 0; -webkit-transition: -webkit-transform 0.3s, color 0.3s; transition: transform 0.3s, color 0.3s; }
 .wrapper #overlay .input__field--ruri:focus + .input__label--ruri::after, .wrapper #overlay .input--filled .input__label--ruri::after, .wrapper #await .input__field--ruri:focus + .input__label--ruri::after, .wrapper #await .input--filled .input__label--ruri::after, .wrapper #roundWon .input__field--ruri:focus + .input__label--ruri::after, .wrapper #roundWon .input--filled .input__label--ruri::after, .wrapper #gameWon .input__field--ruri:focus + .input__label--ruri::after, .wrapper #gameWon .input--filled .input__label--ruri::after { background: #a3d39c; -webkit-transform: scale3d(1, 0.25, 1); transform: scale3d(1, 0.25, 1); }
 .wrapper #overlay .input__field--ruri:focus + .input__label--ruri .input__label-content--ruri, .wrapper #overlay .input--filled .input__label--ruri .input__label-content--ruri, .wrapper #await .input__field--ruri:focus + .input__label--ruri .input__label-content--ruri, .wrapper #await .input--filled .input__label--ruri .input__label-content--ruri, .wrapper #roundWon .input__field--ruri:focus + .input__label--ruri .input__label-content--ruri, .wrapper #roundWon .input--filled .input__label--ruri .input__label-content--ruri, .wrapper #gameWon .input__field--ruri:focus + .input__label--ruri .input__label-content--ruri, .wrapper #gameWon .input--filled .input__label--ruri .input__label-content--ruri { color: #a3d39c; -webkit-transform: translate3d(0, 2em, 0) scale3d(0.655, 0.655, 1); transform: translate3d(0, 2em, 0) scale3d(0.655, 0.655, 1); }
+
+#roundWon .wrapper-inside * { color: white !important; }
 
 #fountainTextG { position: relative; top: 35vh; left: 30vw; }
 
@@ -217,8 +219,8 @@ td, th { padding: 0; }
 /* Table Information */
 #middle-of-table { left: 40vw; top: 35vh; position: absolute; }
 
-.dealer { position: relative; margin: 0 auto; width: 100px; height: 100px; border-radius: 50%; background-color: #D0AE2A; display: none; }
+.dealer { position: relative; margin: 0 auto; width: 80px; height: 80px; border-radius: 50%; background-color: #D0AE2A; display: none; top: -20px; }
 .dealer.active { display: block; }
-.dealer.active:before { content: attr(data-contract); vertical-align: -50%; font-size: .8em; position: absolute; top: 32%; width: 60%; left: 30%; }
+.dealer.active:before { content: attr(data-contract); vertical-align: -50%; font-size: .8em; position: absolute; top: 25%; width: 60%; left: 25%; }
 
 /* Table informattion end*/
