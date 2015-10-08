@@ -1,19 +1,31 @@
 extends ../layout
 
 block content
+  #commandArea.clearfix
+    .float-left
+      button.mdl-button.mdl-js-button.mdl-button--raised.mdl-button--colored#viewAllContracts View All Contracts
+    .float-right
+      div.info-div
+        div.win Wins: 
+          span#noOfWins 0
+        div.loss Losses: 
+          span#noOfLosses 0
   #table.clearfix.mdl-grid
-    div#middle-of-table
-      #deck.card(data-decktype="deck")
+    div#middle-of-table.clearfix
+      div.deckContainer.clearfix
+        #deck.card(data-decktype="deck")
 
-      #discard.card(data-decktype="discard")
+        #discard.card(data-decktype="discard")
 
     #me.clearfix.player-container
-      .dealer
-      .hand#me-hand(data-decktype="playerHand")
+      button.dealer.mdl-button.mdl-js-button.mdl-button--fab.mdl-js-ripple-effect.mdl-button--colored
+        i.material-icons
+      .hand#me-hand(data-decktype="playerHand").clearfix
     
-    #player-0.player-container
-      .dealer
-      .hand(data-decktype="playerHand")
+    #player-0.player-container.side.left
+      button.mdl-button.mdl-js-button.mdl-button--fab.mdl-js-ripple-effect.mdl-button--colored.dealer
+        i.material-icons
+      .hand(data-decktype="playerHand").clearfix
         .card
         .card
         .card
@@ -23,8 +35,9 @@ block content
         .card
 
     #player-1.player-container
-      .dealer
-      .hand(data-decktype="playerHand")
+      button.mdl-button.mdl-js-button.mdl-button--fab.mdl-js-ripple-effect.mdl-button--colored.dealer
+        i.material-icons
+      .hand(data-decktype="playerHand").clearfix
         .card
         .card
         .card
@@ -33,9 +46,10 @@ block content
         .card
         .card
 
-    #player-2.player-container
-      .dealer
-      .hand(data-decktype="playerHand")
+    #player-2.player-container.side.right
+      button.mdl-button.mdl-js-button.mdl-button--fab.mdl-js-ripple-effect.mdl-button--colored.dealer
+        i.material-icons
+      .hand(data-decktype="playerHand").clearfix
         .card
         .card
         .card
@@ -351,6 +365,7 @@ block footerScripts
         if(data.deckType != "discard" && data.newCard[0]) {
           var text = data.newCard[0].split("_")[1];
           $(App.newCard).addClass(data.newCard[0]);
+          $(App.newCard).addClass("inPlay");
           $(App.newCard).attr("data-card", data.newCard[0]);
           $(App.newCard).append("<p>"+text+"</p>");
         }else {
@@ -401,7 +416,7 @@ block footerScripts
         App.playerId = data.id;
         data.hand.forEach(function(e,i,a){
           text = e.split("_")[1];
-          newCard = "<div class='card "+ e +"' data-card='"+e+"'><p>"+text+"</p></div>"
+          newCard = "<div class='card inPlay "+ e +"' data-card='"+e+"'><p>"+text+"</p></div>"
           App.myHand.append(newCard);
         });
 

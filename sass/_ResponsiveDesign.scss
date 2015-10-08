@@ -1,0 +1,53 @@
+@media (max-width: 1060px){
+
+
+  .card{
+    width: 65px;
+    height: 100px;
+    
+    p{
+      font: 27px/100px Georgia, Times New Roman, serif;
+    }
+  }
+}
+@media (max-width: 900px) {
+  #me, #player-1{
+    left: 18vw;
+  }
+}
+
+@media (max-width:  700px) {
+  .card{
+    margin: 0 5px;
+    width: 55px;
+    height: 85px;
+
+    p {
+      font: 25px/83px Georgia, Times New Roman, serif;
+    }
+  }
+
+  [class*="D_"], [class*="H_"], [class*="C_"], [class*="S_"] {
+    &:before {
+      top: -6px;
+      font-size: 23px;
+    }
+
+    &:after {
+      bottom: -3px;
+      font-size: 23px;
+    }
+  }
+
+  #me, #player-1{
+    width: 100%;
+    left: 0;
+    padding-left: 65px;
+
+    .hand {
+      width: 522px;
+      margin: 0 auto;
+    }
+  }
+
+}

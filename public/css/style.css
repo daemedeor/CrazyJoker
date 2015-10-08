@@ -171,11 +171,13 @@ td, th { padding: 0; }
 .fancybox-lock .fancybox-overlay, html, body { overflow: hidden !important; }
 
 /* Card information */
-.card { position: relative; float: left; margin-right: 10px; width: 60px; height: 90px; border-radius: 10px; background: #fff; -webkit-box-shadow: 3px 3px 7px rgba(0, 0, 0, 0.3); box-shadow: 3px 3px 7px rgba(0, 0, 0, 0.3); }
-.card p { text-align: center; font: 30px/90px Georgia, Times New Roman, serif; margin-bottom: 0; }
+.card { position: relative; float: left; margin: 0 5px; width: 70px; height: 110px; border-radius: 10px; background: #A3A393; -webkit-box-shadow: 3px 3px 7px rgba(0, 0, 0, 0.3); box-shadow: 3px 3px 7px rgba(0, 0, 0, 0.3); }
+.card.inPlay { background: #F7FCF8; }
+.card p { text-align: center; font: 32px/111px Georgia, Times New Roman, serif; margin-bottom: 0; }
 
-[class*="D_"]:before, [class*="H_"]:before, [class*="C_"]:before, [class*="S_"]:before { position: absolute; font-size: 25px; left: 5px; top: -10px; }
-[class*="D_"]:after, [class*="H_"]:after, [class*="C_"]:after, [class*="S_"]:after { position: absolute; font-size: 25px; right: 5px; bottom: -5px; }
+[class*="D_"]:before, [class*="D_"]:after, [class*="H_"]:before, [class*="H_"]:after, [class*="C_"]:before, [class*="C_"]:after, [class*="S_"]:before, [class*="S_"]:after { position: absolute; font-size: 30px; }
+[class*="D_"]:before, [class*="H_"]:before, [class*="C_"]:before, [class*="S_"]:before { left: 5px; top: -10px; }
+[class*="D_"]:after, [class*="H_"]:after, [class*="C_"]:after, [class*="S_"]:after { right: 5px; bottom: -5px; }
 
 [class*="D_"]:before, [class*="D_"]:after { content: "♦"; color: #ff0000; }
 
@@ -201,26 +203,47 @@ td, th { padding: 0; }
 .name { text-align: right; }
 .name span { padding-right: 5px; }
 
-#table { background-color: green; height: 100%; width: 100%; position: relative; }
+#commandArea { background-color: #0F0604; height: 6vh; color: white; }
+#commandArea .float-right { float: right; }
+#commandArea .float-left { float: left; }
+#commandArea .info-div { margin: 0 32px; }
+#commandArea .info-div .loss { margin-top: -3px; }
+#commandArea button { float: left; margin: 10px 32px; display: inline-block; height: 25px; font-size: 10px; line-height: 25px; }
+
+#table { background-color: #194D1E; height: 94vh; width: 100%; position: relative; }
 
 /* Player information */
-[id^="player"] { position: absolute; display: none; }
+[id^="player"] { position: absolute; display: block; }
 [id^="player"][data-id] { display: block; }
+[id^="player"].side { top: 40vh; }
+[id^="player"].side.left { left: -190px; }
+[id^="player"].side.right { right: -190px; }
 
-#me { position: absolute; bottom: 15px; left: 30vw; }
+#me { position: absolute; bottom: 4vh; -webkit-transition: left .7s ease-in; transition: left .7s ease-in; left: 24vw; }
 
-#player-0 { left: -156px; bottom: 45vh; -webkit-transform: rotate(90deg); -ms-transform: rotate(90deg); transform: rotate(90deg); }
+#player-0 { -webkit-transform: rotate(90deg); -ms-transform: rotate(90deg); transform: rotate(90deg); }
 
-#player-1 { left: 24vw; top: 4vh; -webkit-transform: rotate(180deg); -ms-transform: rotate(180deg); transform: rotate(180deg); }
+#player-1 { left: 28vw; top: 4vh; -webkit-transform: rotate(180deg); -ms-transform: rotate(180deg); transform: rotate(180deg); }
 
 #player-2 { -webkit-transform: rotate(270deg); -ms-transform: rotate(270deg); transform: rotate(270deg); }
 
 /* Player end */
 /* Table Information */
-#middle-of-table { left: 40vw; top: 35vh; position: absolute; }
+#middle-of-table { position: relative; width: 100%; }
+#middle-of-table .deckContainer { width: 200px; top: 35vh; left: 43vw; position: relative; }
 
-.dealer { position: relative; margin: 0 auto; width: 80px; height: 80px; border-radius: 50%; background-color: #D0AE2A; display: none; top: -20px; }
-.dealer.active { display: block; }
-.dealer.active:before { content: attr(data-contract); vertical-align: -50%; font-size: .8em; position: absolute; top: 25%; width: 60%; left: 25%; }
+.dealer { position: relative; margin: 0 auto; width: 90px; height: 90px; display: none; top: -20px; }
+.dealer.active { display: block; background: #AB201B; }
+.dealer.active:hover { background: #97331B; }
+.dealer.active:before { content: attr(data-contract); vertical-align: -50%; position: absolute; top: 37%; left: 5%; font-size: 12px; margin: 0 auto; }
 
 /* Table informattion end*/
+@media (max-width: 1060px) { .card { width: 65px; height: 100px; }
+  .card p { font: 27px/100px Georgia, Times New Roman, serif; } }
+@media (max-width: 900px) { #me, #player-1 { left: 18vw; } }
+@media (max-width: 700px) { .card { margin: 0 5px; width: 55px; height: 85px; }
+  .card p { font: 25px/83px Georgia, Times New Roman, serif; }
+  [class*="D_"]:before, [class*="H_"]:before, [class*="C_"]:before, [class*="S_"]:before { top: -6px; font-size: 23px; }
+  [class*="D_"]:after, [class*="H_"]:after, [class*="C_"]:after, [class*="S_"]:after { bottom: -3px; font-size: 23px; }
+  #me, #player-1 { width: 100%; left: 0; padding-left: 65px; }
+  #me .hand, #player-1 .hand { width: 522px; margin: 0 auto; } }

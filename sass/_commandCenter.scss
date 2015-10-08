@@ -1,0 +1,30 @@
+#commandArea{
+  background-color: $commandBlack;
+  height: 6vh;
+  color: white;
+  
+  .float-right{
+    float: right;
+  }
+  
+  .float-left{
+    float: left;
+  }
+  
+  .info-div{
+    margin: 0 32px;
+
+    .loss{
+      margin-top: -3px;
+    }
+  }
+
+  button{
+    float: left;
+    margin: 10px 32px;
+    display: inline-block;
+    height: 25px;
+    font-size: 10px;
+    line-height: 25px;
+  }
+}

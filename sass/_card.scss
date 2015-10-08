@@ -2,31 +2,36 @@
 .card{
   position: relative;
   float: left;
-  margin-right: 10px;
-  width: 60px;
-  height: 90px;
+  margin: 0 5px;
+  width: 70px;
+  height: 110px;
   border-radius: 10px;
-  background: #fff;
+  background: $cardBackGrey;
   box-shadow: 3px 3px 7px rgba(0,0,0,0.3);
   
+  &.inPlay{
+    background: $cardWhite;
+  }  
+
   p {
     text-align: center;
-    font: 30px/90px Georgia, Times New Roman, serif;
+    font: 32px/111px Georgia, Times New Roman, serif;
     margin-bottom: 0;
   }
 }
 
 [class*="D_"], [class*="H_"], [class*="C_"], [class*="S_"] {
-  &:before {
+  &:before, &:after{
     position: absolute;
-    font-size: 25px;
+    font-size: 30px;
+  }
+
+  &:before {
     left: 5px;
     top: -10px;
   }
 
   &:after {
-    position: absolute;
-    font-size: 25px;
     right: 5px;
     bottom: -5px;
   }

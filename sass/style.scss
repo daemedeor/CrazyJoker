@@ -1,13 +1,22 @@
+$sidePlacement: -190px;
+$pokerGreen: #194D1E;
+$pokerRed: #AB201B;
+$cardWhite: #F7FCF8;
+$commandBlack: #0F0604;
+$cardBackGrey: #A3A393;
+
 @import "normalize";
 @import "animations";
 @import "wrapper";
 @import "card";
 @import "contract";
+@import "commandCenter";
+
 
 //full table css
 #table{
-  background-color: green;
-  height: 100%;
+  background-color: #194D1E;
+  height: 94vh;
   width: 100%;
   position: relative;
 }
@@ -15,27 +24,38 @@
 /* Player information */
 [id^="player"]{
   position: absolute;
-  display: none;
+  display: block;
   
   &[data-id]{
     display: block;
+  }
+
+  &.side{
+    top: 40vh;
+  
+    &.left{
+      left: $sidePlacement;
+    }
+
+    &.right{
+      right: $sidePlacement;
+    }
   }
 }
  
 #me{
   position: absolute;
-  bottom: 15px;
-  left: 30vw;
+  bottom: 4vh;
+  transition: left .7s ease-in;
+  left: 24vw;
 }
 
 #player-0 {
-  left: -156px;
-  bottom: 45vh;
   transform: rotate(90deg);
 }
 
 #player-1 {
-  left: 24vw;
+  left: 28vw;
   top: 4vh;
   transform: rotate(180deg);
 }
@@ -47,35 +67,45 @@
 
 /* Table Information */
 #middle-of-table {
-  left: 40vw;
-  top: 35vh;
-  position: absolute;
+  position: relative;
+  width: 100%;
+  
+  .deckContainer{
+    width: 200px;
+    top: 35vh;
+    left: 43vw;
+    position: relative;
+  }
 }
 
 .dealer{
   position: relative;
   margin: 0 auto;
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  background-color: #D0AE2A;
+  width: 90px;
+  height: 90px;
   display: none;
   top: -20px;
   
   &.active{
     display: block;
+    background: #AB201B;
     
+    &:hover{
+      background: #97331B;
+    }
+
     &:before{
       content: attr(data-contract);
       vertical-align: -50%;
-      font-size: .8em;
       position: absolute;
-      top: 25%;
-      width: 60%;
-      left: 25%;
+      top: 37%;
+      left: 5%;
+      font-size: 12px;
+      margin: 0 auto;
     }
 
   }
 }
-
 /* Table informattion end*/
+
+@import "ResponsiveDesign";
