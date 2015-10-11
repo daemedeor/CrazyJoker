@@ -23,9 +23,10 @@ var express = require('express')
 var sessionService = require('./SessionUpdate.js');
 var sessionMiddleware = session({
                                     secret: config.cookie_secret,
-                                    resave: false,
+                                    resave: true,
                                     saveUninitialized: true,
                                     store: RedisStore,
+                                    key: config.cookie_secret,
                                     name: config.cookie_name
                                 });
 
