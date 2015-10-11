@@ -121,7 +121,7 @@ block footerScripts
 
         var IO = {
           init: function(){
-            IO.socket = io.connect();
+            IO.socket = io.connect(window.location.origin);
             IO.bindEvents();
           },
 

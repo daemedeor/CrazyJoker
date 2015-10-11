@@ -42,13 +42,15 @@ var allowCrossDomain = function (req, res, next) {
 sessionService.initializeRedis(client, RedisStore);
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
-app.use(cookieParser(config.cookie_secret));
+// app.use(cookieParser(config.cookie_secret));
 app.use(sessionMiddleware);
 
 io.use(function(socket, next) {
     var parseCookie = cookieParser(config.cookie_secret);
     var handshake = socket.request;
+
     parseCookie(handshake, null, function (err, data) {
+        console.log(handshake);
         sessionService.get(handshake, function (err, session) {
             if (err)
                 next(new Error(err.message));
