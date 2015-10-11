@@ -114,369 +114,373 @@ block footerScripts
   script(src="/js/jquery.fancybox.js")
   script(src='/socket.io/socket.io.js')
   script(src='//cdnjs.cloudflare.com/ajax/libs/classie/1.0.1/classie.min.js')
-  script.
-    $(function(){
 
-      var IO = {
-        init: function(){
-          IO.socket = io.connect();
-          IO.bindEvents();
-        },
+  if !renderForm
+    script.
+      $(function(){
 
-        bindEvents: function(){
-          IO.socket.on('connected', IO.connected);
-          IO.socket.on('goToLobby', IO.kickout);
-          IO.socket.on('handSetUp', App.handSetup);
-          IO.socket.on('setPlayer', App.setPlayer);
-          IO.socket.on('contractDecided', IO.contractDecided);
-          IO.socket.on('playerLeft', App.playerLeft);
-          IO.socket.on('newGameRound', App.newGameRound);
-          IO.socket.on('startNewRound', App.startNewRound);
-          IO.socket.on('warning', App.warning);
-          IO.socket.on('addCardToDiscardPile', App.addCardToDiscardPile);
-          IO.socket.on('showCard', App.showCard);
-          IO.socket.on('validMove', App.validMove);
-          IO.socket.on('changedPlayer', App.switchPlayer);
-          IO.socket.on('addCardToHand', App.addCardToHand);
-          IO.socket.on('roundWon', App.roundWon);
-        },
-        
-        kickout: kickout,
-        connected: connected,
-        contractDecided: contractDecided
-      };
+        var IO = {
+          init: function(){
+            IO.socket = io.connect();
+            IO.bindEvents();
+          },
 
-      var App = {
-        
-        //elements of the game
-        draggableElements: ["#me .hand", "#deck", "#discard"],
-        deckPile: $("#deck"),
-        discardPile: $("#discard"),
-        table: $("#table"),
-        myHand: $(".hand", "#me"),
-        me: $("#me"),
-        playerId: null,
-        roomID: $("#room").data("room"),
-        loading: $("#await, .wrapper"),
-        overlay: $("#overlay, .wrapper"),
-        roundOverlay: $("#roundWon, .wrapper"),
-        wonOverlay: $("#gameWon, .wrapper"),
-        startButton: $("#startBtn"),
-        fromHand: '',
-        referencedElement: '',
-        dragndrop: null,
-        currentTurn: false,
-        
-        //functions registered to the app
-        registerDragEvents: registerDragEvents,
-        waiting: waiting,
-        joinRoom: joinRoom,
-        pullCard: pullCard,
-        drag: drag,
-        drop: drop,
-        hideOverlays: hideOverlays,
-        handSetup: handSetup,
-        setPlayer: setPlayer,
-        startNewRound: startNewRound,
-        playerLeft: playerLeft,
-        setCurrentPlayer: setCurrentPlayer,
-        warning: warning,
-        pullACard: pullCard,
-        
-        //app logic that governs a round
-        addCardToTable: addCardToTable,
-        dragEnd: undoMove,
-        validMove: validMove,
-        showCard: showCard,
-        addCardToDiscardPile: addCardToDiscardPile,
-        addCardToHand: addCardToHand,
-        switchPlayer: switchPlayer,
-        roundWon: roundWon,
-        appValidMove: false,
-        newGameRound: newGameRound,
-
-        //functions that should remain defined on the table
-        init: function() {
-
-          App.overlay.show();
-
-          var stringOfElements = App.draggableElements.join(",")
-              , htmlToPassToDraggable = $(stringOfElements).toArray()
-              , dragndrop;
+          bindEvents: function(){
+            IO.socket.on('connected', IO.connected);
+            IO.socket.on('goToLobby', IO.kickout);
+            IO.socket.on('handSetUp', App.handSetup);
+            IO.socket.on('setPlayer', App.setPlayer);
+            IO.socket.on('contractDecided', IO.contractDecided);
+            IO.socket.on('playerLeft', App.playerLeft);
+            IO.socket.on('newGameRound', App.newGameRound);
+            IO.socket.on('startNewRound', App.startNewRound);
+            IO.socket.on('warning', App.warning);
+            IO.socket.on('addCardToDiscardPile', App.addCardToDiscardPile);
+            IO.socket.on('showCard', App.showCard);
+            IO.socket.on('validMove', App.validMove);
+            IO.socket.on('changedPlayer', App.switchPlayer);
+            IO.socket.on('addCardToHand', App.addCardToHand);
+            IO.socket.on('roundWon', App.roundWon);
+          },
           
-          dragndrop = App.dragndrop = dragula(htmlToPassToDraggable);
-          App.registerDragEvents(dragndrop);
-          App.joinRoom();
+          kickout: kickout,
+          connected: connected,
+          contractDecided: contractDecided
+        };
 
-        }
-      }
-
-      IO.init();
-  
-      App.startButton.click(function(e){
-        e.preventDefault();
-        IO.socket.emit("startGame");
-      });
-      
-      $("#readyBtn").click(function(e){
-        e.preventDefault();
-        IO.socket.emit("startGame");
-      });
-      
-      function roundWon(data){
-
-        console.log(data.winner);
-
-        //set the player who won
-        $(".playerName", "#roundWon").html(data.winner.id);
-        $(".contractName", "#roundWon").html(data.winner.currentContract);
-        
-        //empty the rest of the board
-        App.myHand.empty();
-        App.discardPile.empty();
-        App.deckPile.empty();
-        App.roundOverlay.show();
-
-        $(".dealer").removeClass("active");
-
-        console.log("Won Round");
-        IO.socket.emit("pullANewHand");
-      }
-
-      function addCardToHand(data) {
-        $("[data-id='"+data.id+"'] .hand").append("<div class='card'></card>");
-      }
-      
-      function removeCardFromHand(data) {
-        $(".card","[data-id='"+data.id+"']").first().remove();
-      }
-
-      function validMove(data) {
-        App.appValidMove = data.valid;
-      }
-
-      function addCardToTable(){
-        console.log("adding a card");
-        App.deckPile.empty();
-        App.deckPile.append("<div class='card'></div>");
-      }
-
-      function newGameRound(data){
-        console.log("Dealer ID: ", data.dealerId, "AppID: ", App.playerId, "The test: ", data.dealerId == App.playerId);
-        App.hideOverlays();
-        App.currentTurn = false;
-
-        if(data.dealerId == App.playerId){
-          App.addCardToTable();    
-          App.currentTurn = true;  
-        }
-
-        setCurrentPlayer(data);
-      }
-
-      function contractDecided(data) {
-        App.waiting();
-        IO.socket.emit('updateContract', data);
-      }
-
-      function kickout() {
-        window.location = "/table";
-      }
-
-      function connected() {
-        App.init();
-      }
-
-      //App functions 
-
-      function warning(data) {
-        console.warn(data.message);
-      }
-
-      function startNewRound(data) {
-        App.hideOverlays();
-        App.discardPile.empty();
-        App.deckPile.empty();
-
-        $.get("/contracts", {}, function(html){
-          $.fancybox(html, { closeBtn: false, modal: true});
-        });
-      }
-
-      function drop(el, target, source) {
-
-        var dropLocation = $(target).data("decktype")
-            , initialLocation = $(source).data("decktype")
-            , currentHandLength = $(".hand","#me").children().length;
-
-        var isDroppedInWrongPlace = (App.pulledFrom == "playerHand" && dropLocation == "deck" && cur) || (App.pulledFrom == "deck" && dropLocation == "deck" ) || currentHandLength < 7
-            , isToBeDiscarded = (dropLocation == "discard" && dropLocation != App.pulledFrom) && (currentHandLength >= 7 || initialLocation == "deck") 
-            , isValidMove = dropLocation == "playerHand" && App.appValidMove;
-        if(App.currentTurn){
-
-          if(isDroppedInWrongPlace){
-            IO.socket.emit("placeBack");      
-            App.dragndrop.cancel(true);          
-          }else if(isToBeDiscarded){
-
-            var cardToDiscard = $(el).data("card");
-            var originalPlace = $(source).data("decktype");
-
-            IO.socket.emit("discardCard", {pile: originalPlace, card: cardToDiscard});
-            App.currentTurn = false;
-            return;            
-          }else if(isValidMove){
-            IO.socket.emit("addToHand");
-            return;
-          }
+        var App = {
           
-        }else{
-          App.dragndrop.cancel(true);
+          //elements of the game
+          draggableElements: ["#me .hand", "#deck", "#discard"],
+          deckPile: $("#deck"),
+          discardPile: $("#discard"),
+          table: $("#table"),
+          myHand: $(".hand", "#me"),
+          me: $("#me"),
+          playerId: null,
+          roomID: $("#room").data("room"),
+          loading: $("#await, .wrapper"),
+          overlay: $("#overlay, .wrapper"),
+          roundOverlay: $("#roundWon, .wrapper"),
+          wonOverlay: $("#gameWon, .wrapper"),
+          startButton: $("#startBtn"),
+          fromHand: '',
+          referencedElement: '',
+          dragndrop: null,
+          currentTurn: false,
+          
+          //functions registered to the app
+          registerDragEvents: registerDragEvents,
+          waiting: waiting,
+          joinRoom: joinRoom,
+          pullCard: pullCard,
+          drag: drag,
+          drop: drop,
+          hideOverlays: hideOverlays,
+          handSetup: handSetup,
+          setPlayer: setPlayer,
+          startNewRound: startNewRound,
+          playerLeft: playerLeft,
+          setCurrentPlayer: setCurrentPlayer,
+          warning: warning,
+          pullACard: pullCard,
+          
+          //app logic that governs a round
+          addCardToTable: addCardToTable,
+          dragEnd: undoMove,
+          validMove: validMove,
+          showCard: showCard,
+          addCardToDiscardPile: addCardToDiscardPile,
+          addCardToHand: addCardToHand,
+          switchPlayer: switchPlayer,
+          roundWon: roundWon,
+          appValidMove: false,
+          newGameRound: newGameRound,
+
+          //functions that should remain defined on the table
+          init: function() {
+            var stringOfElements = App.draggableElements.join(",")
+                , htmlToPassToDraggable = $(stringOfElements).toArray()
+                , dragndrop;
+            
+            dragndrop = App.dragndrop = dragula(htmlToPassToDraggable);
+            App.registerDragEvents(dragndrop);
+            App.joinRoom();
+
+          }
         }
-      }
-
-      function addCardToDiscardPile(data) {
-        if(data.discardedCard[0]){
-          var text = data.discardedCard[0].split("_")[1];
-          var newText = "<p>"+text+"</p>";
-          App.discardPile.append("<div class='card "+data.discardedCard+"' data-card='"+data.discardedCard+"'>"+newText+"</div>");
-          if(data.type != "deck"){
-            removeCardFromHand(data);
-          }        
-        }
-      }
-
-      function undoMove() {
-        IO.socket.emit("placeBack");
-      }
-
-      function drag(el, source) {
-        var dropLocation = $(source).data("decktype");
-        App.pulledFrom = dropLocation;
-        App.referencedElement = source;
-        App.newCard = el;
-
-        if(dropLocation != "playerHand"){
-          App.pullACard();
-        }
-      }
-      
-      function showCard(data) { 
-        if(data.deckType != "discard" && data.newCard[0]) {
-          var text = data.newCard[0].split("_")[1];
-          $(App.newCard).addClass(data.newCard[0]);
-          $(App.newCard).addClass("inPlay");
-          $(App.newCard).attr("data-card", data.newCard[0]);
-          $(App.newCard).append("<p>"+text+"</p>");
-        }else {
-          $("[data-card='"+data.newCard[0]+"]").remove();
-        }
-      }
-
-      function pullCard() {
-        IO.socket.emit("pullACard", {pile: App.pulledFrom});
-      }
-
-      function joinRoom() {
-        IO.socket.emit("join", {room: App.roomID});
-      };
-      
-      function setCurrentPlayer(data) {
-     
-        var currentId = (data.dealerId) ? data.dealerId : data;
-        var contract = (data.contract) ? data.contract.contractName.trim() : "";
         
-        $(".dealer").removeClass("active");
-        $(".dealer","[data-id="+currentId+"]").removeAttr("data-contract");
-        $(".dealer","[data-id="+currentId+"]").addClass("active");
-        $(".dealer","[data-id="+currentId+"]").attr("data-contract", contract);        
-      
-      }
-
-      function waiting() {
-        App.loading.show();
-      }
-
-      function hideOverlays() {
-        App.loading.hide();
-        App.overlay.hide();
-        App.roundOverlay.hide();
-      }
-  
-      function registerDragEvents(dragndrop) {
-        dragndrop.on("drag", App.drag);
-        dragndrop.on("dragEnd", App.dragEnd);
-        dragndrop.on("drop", App.drop);
-      }
-
-      function handSetup(data) {
-        var text, newCard;
-        App.myHand.empty();
-        App.me.attr("data-id", data.id);
-        App.playerId = data.id;
-        data.hand.forEach(function(e,i,a){
-          text = e.split("_")[1];
-          newCard = "<div class='card inPlay "+ e +"' data-card='"+e+"'><p>"+text+"</p></div>"
-          App.myHand.append(newCard);
-        });
-
-        setPlayer(data);
-      }
-      
-      function playerLeft(data){
-        var currentId;
-
-        $(".player-container").each(function(e){
-          if(data.playerId == $(this).data('id')){
-            $(this).removeAttr("data-id");
-            return;
-          }
-        });
-
-        setCurrentPlayer(data);
-      }
-      function switchPlayer(data){
-        $("#deck").append("<div class='card'></div>");
-        App.appValidMove = true;
-        App.currentTurn = true;
-        setCurrentPlayer(data);
-      }
-
-      function setPlayer(data){
-        var players = data.players || []
-            , currentIds = []
-            , currentIdOfPlayer
-            , currentPlayer
-            , id = null
-            , currentPlayerContainer;
-
-        $('.player-container').each(function(){
-          currentIdOfPlayer = $(this).data('id');
-          if(currentIdOfPlayer){
-            currentIds.push(currentIdOfPlayer);
-          }
+        $("#overlay, .wrapper").show();
+        IO.init();
+    
+        App.startButton.click(function(e){
+          e.preventDefault();
+          IO.socket.emit("startGame");
         });
         
-        players.forEach(function(e,i){
-          var emptyPlayer = 0;
-          while(emptyPlayer < 3){
+        $("#readyBtn").click(function(e){
+          e.preventDefault();
+          IO.socket.emit("startGame");
+        });
+        
+        function roundWon(data){
 
-            currentPlayer = $("#player-"+ emptyPlayer, "#table");
-            id = currentPlayer.data("id");
+          console.log(data.winner);
 
-            if(!id){
-              if(currentIds.indexOf(e) == -1){
-                currentPlayer.attr('data-id', e);
-                break;
-              }
+          //set the player who won
+          $(".playerName", "#roundWon").html(data.winner.id);
+          $(".contractName", "#roundWon").html(data.winner.currentContract);
+          
+          //empty the rest of the board
+          App.myHand.empty();
+          App.discardPile.empty();
+          App.deckPile.empty();
+          App.roundOverlay.show();
+
+          $(".dealer").removeClass("active");
+
+          console.log("Won Round");
+          IO.socket.emit("pullANewHand");
+        }
+
+        function addCardToHand(data) {
+          $("[data-id='"+data.id+"'] .hand").append("<div class='card'></card>");
+        }
+        
+        function removeCardFromHand(data) {
+          $(".card","[data-id='"+data.id+"']").first().remove();
+        }
+
+        function validMove(data) {
+          App.appValidMove = data.valid;
+        }
+
+        function addCardToTable(){
+          console.log("adding a card");
+          App.deckPile.empty();
+          App.deckPile.append("<div class='card'></div>");
+        }
+
+        function newGameRound(data){
+   
+          App.hideOverlays();
+          App.currentTurn = false;
+
+          if(data.dealerId == App.playerId){
+            App.addCardToTable();    
+            App.currentTurn = true;  
+          }
+
+          setCurrentPlayer(data);
+        }
+
+        function contractDecided(data) {
+          App.waiting();
+          IO.socket.emit('updateContract', data);
+        }
+
+        function kickout() {
+          window.location = "/table";
+        }
+
+        function connected() {
+          App.init();
+        }
+
+        //App functions 
+
+        function warning(data) {
+          console.warn(data.message);
+        }
+
+        function startNewRound(data) {
+          App.hideOverlays();
+          App.discardPile.empty();
+          App.deckPile.empty();
+
+          $.get("/contracts", {}, function(html){
+            $.fancybox(html, { closeBtn: false, modal: true});
+          });
+        }
+
+        function drop(el, target, source) {
+
+          var dropLocation = $(target).data("decktype")
+              , initialLocation = $(source).data("decktype")
+              , currentHandLength = $(".hand","#me").children().length;
+
+          var isDroppedInWrongPlace = (App.pulledFrom == "playerHand" && dropLocation == "deck" && cur) || (App.pulledFrom == "deck" && dropLocation == "deck" ) || currentHandLength < 7
+              , isToBeDiscarded = (dropLocation == "discard" && dropLocation != App.pulledFrom) && (currentHandLength >= 7 || initialLocation == "deck") 
+              , isValidMove = dropLocation == "playerHand" && App.appValidMove;
+          if(App.currentTurn){
+
+            if(isDroppedInWrongPlace){
+              IO.socket.emit("placeBack");      
+              App.dragndrop.cancel(true);          
+            }else if(isToBeDiscarded){
+
+              var cardToDiscard = $(el).data("card");
+              var originalPlace = $(source).data("decktype");
+
+              IO.socket.emit("discardCard", {pile: originalPlace, card: cardToDiscard});
+              App.currentTurn = false;
+              return;            
+            }else if(isValidMove){
+              IO.socket.emit("addToHand");
+              return;
             }
-
-            emptyPlayer++;
+            
+          }else{
+            App.dragndrop.cancel(true);
           }
-          
-          
-        });
-      }
-    });
+        }
 
-  
+        function addCardToDiscardPile(data) {
+          if(data.discardedCard[0]){
+            var text = data.discardedCard[0].split("_")[1];
+            var newText = "<p>"+text+"</p>";
+            App.discardPile.append("<div class='card "+data.discardedCard+"' data-card='"+data.discardedCard+"'>"+newText+"</div>");
+            if(data.type != "deck"){
+              removeCardFromHand(data);
+            }        
+          }
+        }
+
+        function undoMove() {
+          IO.socket.emit("placeBack");
+        }
+
+        function drag(el, source) {
+          var dropLocation = $(source).data("decktype");
+          App.pulledFrom = dropLocation;
+          App.referencedElement = source;
+          App.newCard = el;
+
+          if(dropLocation != "playerHand"){
+            App.pullACard();
+          }
+        }
+        
+        function showCard(data) { 
+          if(data.deckType != "discard" && data.newCard[0]) {
+            var text = data.newCard[0].split("_")[1];
+            $(App.newCard).addClass(data.newCard[0]);
+            $(App.newCard).addClass("inPlay");
+            $(App.newCard).attr("data-card", data.newCard[0]);
+            $(App.newCard).append("<p>"+text+"</p>");
+          }else {
+            $("[data-card='"+data.newCard[0]+"]").remove();
+          }
+        }
+
+        function pullCard() {
+          IO.socket.emit("pullACard", {pile: App.pulledFrom});
+        }
+
+        function joinRoom() {
+          IO.socket.emit("join", {room: App.roomID});
+        };
+        
+        function setCurrentPlayer(data) {
+       
+          var currentId = (data.dealerId) ? data.dealerId : data;
+          var contract = (data.contract) ? data.contract.contractName.trim() : "";
+          
+          $(".dealer").removeClass("active");
+          $(".dealer","[data-id="+currentId+"]").removeAttr("data-contract");
+          $(".dealer","[data-id="+currentId+"]").addClass("active");
+          $(".dealer","[data-id="+currentId+"]").attr("data-contract", contract);        
+        
+        }
+
+        function waiting() {
+          App.loading.show();
+        }
+
+        function hideOverlays() {
+          App.loading.hide();
+          App.overlay.hide();
+          App.roundOverlay.hide();
+        }
+    
+        function registerDragEvents(dragndrop) {
+          dragndrop.on("drag", App.drag);
+          dragndrop.on("dragEnd", App.dragEnd);
+          dragndrop.on("drop", App.drop);
+        }
+
+        function handSetup(data) {
+          var text, newCard;
+          App.myHand.empty();
+          App.me.attr("data-id", data.id);
+          App.playerId = data.id;
+          data.hand.forEach(function(e,i,a){
+            text = e.split("_")[1];
+            newCard = "<div class='card inPlay "+ e +"' data-card='"+e+"'><p>"+text+"</p></div>"
+            App.myHand.append(newCard);
+          });
+
+          setPlayer(data);
+        }
+        
+        function playerLeft(data) {
+          var currentId;
+
+          $(".player-container").each(function(e){
+            if(data.playerId == $(this).data('id')){
+              $(this).removeAttr("data-id");
+              return;
+            }
+          });
+
+          setCurrentPlayer(data);
+        }
+        function switchPlayer(data){
+          $("#deck").append("<div class='card'></div>");
+          App.appValidMove = true;
+          App.currentTurn = true;
+          setCurrentPlayer(data);
+        }
+
+        function setPlayer(data){
+          var players = data.players || []
+              , currentIds = []
+              , currentIdOfPlayer
+              , currentPlayer
+              , id = null
+              , currentPlayerContainer;
+
+          $('.player-container').each(function(){
+            currentIdOfPlayer = $(this).data('id');
+            if(currentIdOfPlayer){
+              currentIds.push(currentIdOfPlayer);
+            }
+          });
+          
+          players.forEach(function(e,i){
+            var emptyPlayer = 0;
+            while(emptyPlayer < 3){
+
+              currentPlayer = $("#player-"+ emptyPlayer, "#table");
+              id = currentPlayer.data("id");
+
+              if(!id){
+                if(currentIds.indexOf(e) == -1){
+                  currentPlayer.attr('data-id', e);
+                  break;
+                }
+              }
+
+              emptyPlayer++;
+            }
+            
+            
+          });
+        }
+      });
+
+  else 
+    script.
+      $(function(){
+        $("#overlay, .wrapper").show();
+      });

@@ -24,7 +24,7 @@ $cardBackGrey: #A3A393;
 /* Player information */
 [id^="player"]{
   position: absolute;
-  display: block;
+  display: none;
   
   &[data-id]{
     display: block;

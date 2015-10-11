@@ -213,7 +213,7 @@ td, th { padding: 0; }
 #table { background-color: #194D1E; height: 94vh; width: 100%; position: relative; }
 
 /* Player information */
-[id^="player"] { position: absolute; display: block; }
+[id^="player"] { position: absolute; display: none; }
 [id^="player"][data-id] { display: block; }
 [id^="player"].side { top: 40vh; }
 [id^="player"].side.left { left: -190px; }

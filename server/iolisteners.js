@@ -28,12 +28,10 @@ module.exports = function(app, io, redis){
     socket.emit('connected');
 
     socket.on("join", function(data){
-      
       var noOppents
           , player
           , roomID = data.room
           , game = getGame(roomID);
-
       socket.currentRoom = roomID;
       
       //try to find a game room
@@ -82,6 +80,7 @@ module.exports = function(app, io, redis){
     });
  
     socket.on('startGame', function(data){
+      console.log("starting");
       startGame();
     });
 
