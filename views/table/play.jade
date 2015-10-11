@@ -112,10 +112,10 @@ block headerScripts
 
 block footerScripts
   script(src="/js/jquery.fancybox.js")
-  script(src='/socket.io/socket.io.js')
   script(src='//cdnjs.cloudflare.com/ajax/libs/classie/1.0.1/classie.min.js')
 
   if !renderForm
+    script(src='/socket.io/socket.io.js')
     script.
       $(function(){
 
