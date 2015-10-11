@@ -1,4 +1,4 @@
-var sessionService = require('./sessionUpdate');
+var sessionService = require('./SessionUpdate.js');
 
 module.exports = function(app, socket, db) {
   app.get("/contracts", function(req, res) {
