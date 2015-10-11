@@ -24,9 +24,9 @@ var sessionService = require('./SessionUpdate.js');
 var sessionMiddleware = session({
                                     secret: config.cookie_secret,
                                     resave: true,
-                                  saveUninitialized: true,
+                                    saveUninitialized: true,
                                     store: RedisStore,
-                                    key: config.cookie_secret
+                                    name: config.cookie_name
                                 });
 
 var allowCrossDomain = function (req, res, next) {
@@ -46,7 +46,7 @@ app.use(sessionMiddleware);
 io.use(function(socket, next) {
     var parseCookie = cookieParser(config.cookie_secret);
     var handshake = socket.request;
-    console.log(config);
+    console.log()
     parseCookie(handshake, null, function (err, data) {
         sessionService.get(handshake, function (err, session) {
             if (err)
