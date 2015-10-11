@@ -55,6 +55,7 @@ io.use(function(socket, next) {
                 next(new Error("Not authorized"));
 
             handshake.session = session;
+            console.log(handshake);
             next();
         });
     });

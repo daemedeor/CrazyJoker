@@ -1,7 +1,6 @@
 var deck = require("./Deck.js")
     , validation = require("./Validation.js")
     , sessionService = require('./SessionUpdate.js');
-
 module.exports = function(app, io, redis){
   var games = {};
 
