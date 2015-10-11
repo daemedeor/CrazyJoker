@@ -24,8 +24,6 @@ var sessionService = require('./SessionUpdate.js');
 var sessionMiddleware = session({
                                     secret: config.cookie_secret,
                                     resave: false,
-                                    rolling: true,
-                                    cookie: {secure: false},
                                     saveUninitialized: true,
                                     store: RedisStore,
                                     name: config.cookie_name
@@ -42,7 +40,7 @@ var allowCrossDomain = function (req, res, next) {
 sessionService.initializeRedis(client, RedisStore);
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
-// app.use(cookieParser(config.cookie_secret));
+app.use(cookieParser(config.cookie_secret));
 app.use(sessionMiddleware);
 
 io.use(function(socket, next) {
@@ -50,7 +48,6 @@ io.use(function(socket, next) {
     var handshake = socket.request;
 
     parseCookie(handshake, null, function (err, data) {
-        console.log(handshake);
         sessionService.get(handshake, function (err, session) {
             if (err)
                 next(new Error(err.message));
