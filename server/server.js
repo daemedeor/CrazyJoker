@@ -20,7 +20,7 @@ var express = require('express')
     , ioSocket = require("./iolisteners")(app, io, redis);
 
 
-var sessionService = require('./sessionUpdate');
+var sessionService = require('./SessionUpdate.js');
 var sessionMiddleware = session({
                                     secret: config.cookie_secret,
                                     resave: true,
