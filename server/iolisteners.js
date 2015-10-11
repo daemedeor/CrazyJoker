@@ -19,21 +19,22 @@ module.exports = function(app, io, redis){
   });
 
   io.sockets.on("connection", function(socket) {
-    
     socket.currentRoom = null;
     socket.player = null;
     socket.playerID = null;
 
     socket.emit('connected');
+    socket.request.session.alreadyPlayedContracts = [];
+    socket.request.session.socketId = socket.request.session.socketId;
+    socket.request.session.currentContract = "none";
 
     socket.on("join", function(data){
       var noOppents
           , player
           , roomID = data.room
           , game = getGame(roomID);
-      socket.currentRoom = roomID;
-      
-      console.log("joining a room");
+      socket.currentRoom = roomID;      
+
       //try to find a game room
       if(game) {
 
@@ -54,10 +55,6 @@ module.exports = function(app, io, redis){
         game = new Game(roomID);
         player = new Player(game.dealNewHand());
       }
-
-      setSession("alreadyPlayedContracts", []);
-      setSession("currentContract", "none");
-      setSession("socketId", socket.id);
 
       //add the new player that was created
       game.addPlayer(player);
@@ -80,23 +77,15 @@ module.exports = function(app, io, redis){
     });
  
     socket.on('startGame', function(data){
-      console.log("starting");
       startGame();
     });
 
 
     socket.on('updateContract', function(data){
       var game = getGame();
-
       if(game) {
-
-        getSession("alreadyPlayedContracts", function(err, alreadyPlayedContract){
-          if(!err && alreadyPlayedContract){
-            alreadyPlayedContract.push(data);
-            setSession("alreadyPlayedContracts", alreadyPlayedContract);
-          }
-        });
-
+        socket.request.session.alreadyPlayedContracts.push(data);
+   
         game.setPlayerContract(socket.playerID, data);
       
         var areAllGameContractsSet = game.contractsAllSet();

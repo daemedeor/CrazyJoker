@@ -21,7 +21,7 @@ module.exports = function(app, socket, db) {
   });
 
   app.post("/setContract", function(req,res) {
-    socket.to(req.session.socketId).emit('contractDecided', {contractName: req.body.name, contractId: req.body.contractId, backendName: req.body.bName});
+    req.session.currentContract = {contractName: req.body.name, contractId: req.body.contractId, backendName: req.body.bName};
     res.sendStatus(200);
   });
 };

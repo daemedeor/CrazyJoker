@@ -123,6 +123,7 @@ block footerScripts
           init: function(){
             IO.socket = io.connect(window.location.origin);
             IO.bindEvents();
+            window.contractDecided = IO.contractDecided;
           },
 
           bindEvents: function(){
@@ -273,6 +274,7 @@ block footerScripts
         }
 
         function contractDecided(data) {
+          console.log("testing");
           App.waiting();
           IO.socket.emit('updateContract', data);
         }

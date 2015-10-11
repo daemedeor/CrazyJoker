@@ -20,7 +20,9 @@ script.
       var id = $parent.data("id");
       var name = $parent.find(".name")[0].innerText;
       var bName = $parent.data("bname");
-      $.post("/setContract", {name: name, contractId: id, bName: bName}, function(){
+
+      contractDecided({contractName: name, contractId: id, backendName: bName});
+      $.post("/setContract", function(){
         $.fancybox.close(true);
       });
 

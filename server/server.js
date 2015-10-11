@@ -6,7 +6,6 @@ var express = require('express')
     , io = require("socket.io")(server)
     , redis = require("redis")
     , client = redis.createClient()
-    , cookieParser = require('cookie-parser')
     , session = require("express-session")
     , redisStore = require("connect-redis")(session)
     , generalRoutes = require("./Routes.js")
@@ -23,7 +22,7 @@ var express = require('express')
 var sessionService = require('./SessionUpdate.js');
 var sessionMiddleware = session({
                                     secret: config.cookie_secret,
-                                    resave: true,
+                                    resave: false,
                                     saveUninitialized: true,
                                     store: RedisStore,
                                     key: config.cookie_secret,
@@ -41,24 +40,10 @@ var allowCrossDomain = function (req, res, next) {
 sessionService.initializeRedis(client, RedisStore);
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
-app.use(cookieParser(config.cookie_secret));
 app.use(sessionMiddleware);
 
 io.use(function(socket, next) {
-    var parseCookie = cookieParser(config.cookie_secret);
-    var handshake = socket.request;
-
-    parseCookie(handshake, null, function (err, data) {
-        sessionService.get(handshake, function (err, session) {
-            if (err)
-                next(new Error(err.message));
-            if (!session)
-                next(new Error("Not authorized"));
-
-            handshake.session = session;
-            next();
-        });
-    });
+    sessionMiddleware(socket.request, socket.request.res, next);
 });
 
 templates = require('./templates')(app, io, db);
