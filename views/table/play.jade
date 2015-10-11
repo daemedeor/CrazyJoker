@@ -205,8 +205,6 @@ block footerScripts
             
             dragndrop = App.dragndrop = dragula(htmlToPassToDraggable);
             App.registerDragEvents(dragndrop);
-            App.joinRoom();
-
           }
         }
         
@@ -284,6 +282,7 @@ block footerScripts
         }
 
         function connected() {
+          App.joinRoom();
           App.init();
         }
 
@@ -435,7 +434,7 @@ block footerScripts
 
           setCurrentPlayer(data);
         }
-        
+
         function switchPlayer(data){
           $("#deck").append("<div class='card'></div>");
           App.appValidMove = true;
