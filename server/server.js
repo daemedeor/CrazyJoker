@@ -46,7 +46,7 @@ app.use(sessionMiddleware);
 io.use(function(socket, next) {
     var parseCookie = cookieParser(config.cookie_secret);
     var handshake = socket.request;
-
+    console.log(config);
     parseCookie(handshake, null, function (err, data) {
         sessionService.get(handshake, function (err, session) {
             if (err)
@@ -55,7 +55,6 @@ io.use(function(socket, next) {
                 next(new Error("Not authorized"));
 
             handshake.session = session;
-            console.log(handshake);
             next();
         });
     });
