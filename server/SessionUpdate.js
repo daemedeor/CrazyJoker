@@ -9,6 +9,7 @@ var self = module.exports = {
         redisStore = store;
     },
     getSessionId: function (handshake) {
+        console.log(handshake.signedCookies);
         return handshake.signedCookies[config.cookie_name];
     },
     get: function (handshake, callback) {
