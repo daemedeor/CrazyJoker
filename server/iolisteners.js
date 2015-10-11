@@ -34,6 +34,7 @@ module.exports = function(app, io, redis){
           , game = getGame(roomID);
       socket.currentRoom = roomID;
       
+      console.log("joining a room");
       //try to find a game room
       if(game) {
 
