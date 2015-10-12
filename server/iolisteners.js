@@ -20,24 +20,24 @@ module.exports = function(app, io, redis){
   });
 
   io.sockets.on("connection", function(socket) {
-    var session = socket.handshake.session;
+    
 
     socket.currentRoom = null;
     socket.player = null;
     socket.playerID = null;
     socket.emit('connected');
-
-    session.alreadyPlayedContracts = [];
-    session.currentContract = "none";
-    session.socketId = socket.id;
-    session.save();
-
+   
     socket.on("join", function(data){
       var noOppents
           , player
           , roomID = data.room
           , game = getGame(roomID);
       socket.currentRoom = roomID;      
+      var session = socket.handshake.session;
+      session.alreadyPlayedContracts = [];
+      session.currentContract = "none";
+      session.socketId = socket.id;
+      session.save();
 
       //try to find a game room
       if(game) {

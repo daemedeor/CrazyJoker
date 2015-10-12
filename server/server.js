@@ -18,7 +18,7 @@ var express = require('express')
 
 var session = Session({
                 secret: config.cookie_secret,
-                resave: false,
+                resave: true,
                 saveUninitialized: true,
                 store: RedisStore,
                 key: config.cookie_secret,
@@ -37,7 +37,6 @@ var allowCrossDomain = function (req, res, next) {
 };
 
 app.use(allowCrossDomain);
-app.use(cookieParser(config.cookie_secret));
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
