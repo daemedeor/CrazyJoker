@@ -2,29 +2,38 @@ table
   thead
     tr
       th Name
-      th Add Contract
+      if choosingContract
+        th Add Contract
+      else 
+        th Description
   tbody
     each contract in contracts
       tr.contract(data-id="#{contract.id}" data-bname="#{contract.bName}")
-        td.name #{contract.name} 
-          span(title="#{contract.description}")
-            i.fa.fa-info-circle(title="#{contract.description}")
-        td 
-          a(href="#").addContract Choose Contract
+        if choosingContract
+          td.name #{contract.name} 
+            span(title="#{contract.description}")
+              i.fa.fa-info-circle(title="#{contract.description}")
+          td 
+            a(href="#").addContract Choose Contract
+        else 
+          td.name #{contract.name} 
+          td(style="padding-left: 10px;")
+            span #{contract.description}
 
-script.
-  $(function(){
-    $(".addContract").click(function(e){
-      e.preventDefault();
-      $parent = $(this).closest(".contract");  
-      var id = $parent.data("id");
-      var name = $parent.find(".name")[0].innerText;
-      var bName = $parent.data("bname");
+if choosingContract
+  script.
+    $(function(){
+      $(".addContract").click(function(e){
+        e.preventDefault();
+        $parent = $(this).closest(".contract");  
+        var id = $parent.data("id");
+        var name = $parent.find(".name")[0].innerText;
+        var bName = $parent.data("bname");
 
-      contractDecided({contractName: name, contractId: id, backendName: bName});
-      $.post("/setContract", function(){
-        $.fancybox.close(true);
+        contractDecided({contractName: name, contractId: id, backendName: bName});
+        $.post("/setContract", function(){
+          $.fancybox.close(true);
+        });
+
       });
-
     });
-  });

@@ -1,10 +1,7 @@
-var sessionService = require('./SessionUpdate.js');
-
 module.exports = function(app, socket, db) {
-  app.get("/contracts", function(req, res) {
-    
-    db.Contracts.findAll().then(function(contracts) {
-      
+  app.get("/contract/select", function(req, res) {
+
+    db.Contracts.findAll().then(function(contracts) {      
       var alreadyPlayedContracts = req.session.alreadyPlayedContracts;
 
       var filteredContracts = contracts.filter(function(element) {  
@@ -15,8 +12,20 @@ module.exports = function(app, socket, db) {
 
       });
 
-      res.render("templates/contract", {contracts: filteredContracts});
+      res.render("templates/contract", {contracts: filteredContracts, choosingContract: true});
     
+    });
+  });
+
+  app.get("/contract/all", function(req,res){
+    db.Contracts.findAll().then(function(contracts) {
+      res.render("templates/contract", {contracts: contracts, choosingContract: false});
+    });
+  });
+
+  app.get("/contract/:id",function(req,res){
+    db.Contracts.find({ where: { id: req.params.id } }).then(function(contract){
+      res.render("templates/singleContract", {contract: contract})
     });
   });
 

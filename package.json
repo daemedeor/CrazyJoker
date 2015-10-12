@@ -21,7 +21,8 @@
     "pgpass": "0.0.3",
     "redis": "^0.12.1",
     "sequelize": "^3.5.1",
-    "socket.io": "^1.3.6"
+    "socket.io": "^1.3.6",
+    "socket.io-express-session": "^0.1.3"
   },
   "devDependencies": {
     "faker": "^3.0.1",

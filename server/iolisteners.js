@@ -2,6 +2,7 @@ var deck = require("./Deck.js")
     , validation = require("./Validation.js")
     , sessionService = require('./SessionUpdate.js');
 module.exports = function(app, io, redis){
+  
   var games = {};
 
   app.get('/table/:room', function(req, res) {
@@ -19,14 +20,17 @@ module.exports = function(app, io, redis){
   });
 
   io.sockets.on("connection", function(socket) {
+    var session = socket.handshake.session;
+
     socket.currentRoom = null;
     socket.player = null;
     socket.playerID = null;
-
     socket.emit('connected');
-    socket.request.session.alreadyPlayedContracts = [];
-    socket.request.session.socketId = socket.request.session.socketId;
-    socket.request.session.currentContract = "none";
+
+    session.alreadyPlayedContracts = [];
+    session.currentContract = "none";
+    session.socketId = socket.id;
+    session.save();
 
     socket.on("join", function(data){
       var noOppents
@@ -84,8 +88,10 @@ module.exports = function(app, io, redis){
     socket.on('updateContract', function(data){
       var game = getGame();
       if(game) {
-        socket.request.session.alreadyPlayedContracts.push(data);
-   
+
+        session.alreadyPlayedContracts.push(data);
+        session.save();
+
         game.setPlayerContract(socket.playerID, data);
       
         var areAllGameContractsSet = game.contractsAllSet();
@@ -278,6 +284,7 @@ module.exports = function(app, io, redis){
     }
     
     function setSession(property, value, cb) {
+      console.log(socket.request.session);
       sessionService.setSessionProperty(socket.request.session, property, value, function(err, data){
         if(err){
           cb(err);
@@ -730,7 +737,6 @@ Player.prototype.discardCard = function(card){
 
   return false;
 }
-
 
 function generateID(length) {
   var haystack = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';

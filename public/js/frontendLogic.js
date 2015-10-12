@@ -7,7 +7,23 @@ $(function() {
     window.location = "/table/"+newRoom;
   });
 
-  // trim polyfill : https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/Trim
+  $("#viewAllContracts").click(function(e){
+    e.preventDefault();
+    $.get("/contract/all", {}, function(html){
+      $.fancybox(html, { closeBtn: true});
+    });
+  });
+
+  $("span.dealer").click(function(e){
+    e.preventDefault();
+    console.log("click");
+    var id = $(this).data("cid");
+    console.log(id);
+    $.get("/contract/"+id, {}, function(html){
+      $.fancybox(html, { closeBtn: true});
+    });
+  });
+
   if (!String.prototype.trim) {
     (function() {
       // Make sure we trim BOM and NBSP

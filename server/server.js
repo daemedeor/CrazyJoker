@@ -6,28 +6,27 @@ var express = require('express')
     , io = require("socket.io")(server)
     , redis = require("redis")
     , client = redis.createClient()
-    , session = require("express-session")
-    , redisStore = require("connect-redis")(session)
+    , Session = require("express-session")
+    , redisStore = require("connect-redis")(Session)
     , generalRoutes = require("./Routes.js")
+    , cookieParser = require("cookie-parser")
     , bodyParser = require("body-parser")
     , config = require("../config/config")
-    , RedisStore = new redisStore({
-                                    port: config.session_port,
-                                    host: "localhost",
-                                    client: client
-                                })
+    , RedisStore = new redisStore({ client: client })
+    , ios = require('socket.io-express-session')
     , ioSocket = require("./iolisteners")(app, io, redis);
 
+var session = Session({
+                secret: config.cookie_secret,
+                resave: false,
+                saveUninitialized: true,
+                store: RedisStore,
+                key: config.cookie_secret,
+                name: config.cookie_name
+            });
 
-var sessionService = require('./SessionUpdate.js');
-var sessionMiddleware = session({
-                                    secret: config.cookie_secret,
-                                    resave: false,
-                                    saveUninitialized: true,
-                                    store: RedisStore,
-                                    key: config.cookie_secret,
-                                    name: config.cookie_name
-                                });
+io.use(ios(session));
+app.use(session);
 
 var allowCrossDomain = function (req, res, next) {
     res.header("Access-Control-Allow-Origin", config.allowedCORSOrigins);
@@ -37,14 +36,11 @@ var allowCrossDomain = function (req, res, next) {
     next();
 };
 
-sessionService.initializeRedis(client, RedisStore);
+app.use(allowCrossDomain);
+app.use(cookieParser(config.cookie_secret));
+
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
-app.use(sessionMiddleware);
-
-io.use(function(socket, next) {
-    sessionMiddleware(socket.request, socket.request.res, next);
-});
 
 templates = require('./templates')(app, io, db);
 

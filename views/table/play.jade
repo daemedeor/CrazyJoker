@@ -18,12 +18,12 @@ block content
         #discard.card(data-decktype="discard")
 
     #me.clearfix.player-container
-      button.dealer.mdl-button.mdl-js-button.mdl-button--fab.mdl-js-ripple-effect.mdl-button--colored
+      span.dealer.mdl-button.mdl-js-button.mdl-button--fab.mdl-js-ripple-effect.mdl-button--colored
         i.material-icons
       .hand#me-hand(data-decktype="playerHand").clearfix
     
     #player-0.player-container.side.left
-      button.mdl-button.mdl-js-button.mdl-button--fab.mdl-js-ripple-effect.mdl-button--colored.dealer
+      span.mdl-button.mdl-js-button.mdl-button--fab.mdl-js-ripple-effect.mdl-button--colored.dealer
         i.material-icons
       .hand(data-decktype="playerHand").clearfix
         .card
@@ -35,7 +35,7 @@ block content
         .card
 
     #player-1.player-container
-      button.mdl-button.mdl-js-button.mdl-button--fab.mdl-js-ripple-effect.mdl-button--colored.dealer
+      span.mdl-button.mdl-js-button.mdl-button--fab.mdl-js-ripple-effect.mdl-button--colored.dealer
         i.material-icons
       .hand(data-decktype="playerHand").clearfix
         .card
@@ -47,7 +47,7 @@ block content
         .card
 
     #player-2.player-container.side.right
-      button.mdl-button.mdl-js-button.mdl-button--fab.mdl-js-ripple-effect.mdl-button--colored.dealer
+      span.mdl-button.mdl-js-button.mdl-button--fab.mdl-js-ripple-effect.mdl-button--colored.dealer
         i.material-icons
       .hand(data-decktype="playerHand").clearfix
         .card
@@ -221,7 +221,7 @@ block footerScripts
           e.preventDefault();
           IO.socket.emit("startGame");
         });
-        
+
         function roundWon(data){
 
           console.log(data.winner);
@@ -299,7 +299,7 @@ block footerScripts
           App.discardPile.empty();
           App.deckPile.empty();
 
-          $.get("/contracts", {}, function(html){
+          $.get("/contract/select", {}, function(html){
             $.fancybox(html, { closeBtn: false, modal: true});
           });
         }
@@ -386,11 +386,13 @@ block footerScripts
        
           var currentId = (data.dealerId) ? data.dealerId : data;
           var contract = (data.contract) ? data.contract.contractName.trim() : "";
-          
+          var contractID = (data.contract) ? data.contract.contractId : "";
+
           $(".dealer").removeClass("active");
           $(".dealer","[data-id="+currentId+"]").removeAttr("data-contract");
           $(".dealer","[data-id="+currentId+"]").addClass("active");
           $(".dealer","[data-id="+currentId+"]").attr("data-contract", contract);        
+          $(".dealer","[data-id="+currentId+"]").attr("data-cid", contractID);        
         
         }
 
