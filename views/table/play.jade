@@ -310,7 +310,7 @@ block footerScripts
               , initialLocation = $(source).data("decktype")
               , currentHandLength = $(".hand","#me").children().length;
 
-          var isDroppedInWrongPlace = (App.pulledFrom == "playerHand" && dropLocation == "deck" && cur) || (App.pulledFrom == "deck" && dropLocation == "deck" ) || currentHandLength < 7
+          var isDroppedInWrongPlace = (App.pulledFrom == "playerHand" && dropLocation == "deck") || (App.pulledFrom == "deck" && dropLocation == "deck" ) || currentHandLength < 7
               , isToBeDiscarded = (dropLocation == "discard" && dropLocation != App.pulledFrom) && (currentHandLength >= 7 || initialLocation == "deck") 
               , isValidMove = dropLocation == "playerHand" && App.appValidMove;
           if(App.currentTurn){
@@ -340,7 +340,7 @@ block footerScripts
           if(data.discardedCard[0]){
             var text = data.discardedCard[0].split("_")[1];
             var newText = "<p>"+text+"</p>";
-            App.discardPile.append("<div class='card "+data.discardedCard+"' data-card='"+data.discardedCard+"'>"+newText+"</div>");
+            App.discardPile.append("<div class='card inPlay "+data.discardedCard+"' data-card='"+data.discardedCard+"'>"+newText+"</div>");
             if(data.type != "deck"){
               removeCardFromHand(data);
             }        
